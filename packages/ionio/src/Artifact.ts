@@ -1,18 +1,31 @@
 import fs from 'fs';
 import { PrimitiveType } from './interfaces';
 
-export interface Parameter {
+interface Artifact {
+  contractName: string;
+  constructorInputs: Parameter[];
+  functions: Function[];
+}
+
+interface Parameter {
   name: string;
   type: PrimitiveType;
 }
 
-export interface Requirement {
+interface Function {
+  name: string;
+  functionInputs: Parameter[];
+  require: Requirement[];
+  asm: string[];
+}
+
+interface Requirement {
   type: RequirementType;
   expected: Input | Output | number | string | undefined;
   atIndex?: number; // for input* or output* requirements only
 }
 
-export enum RequirementType {
+enum RequirementType {
   // Input
   Input = 'input',
   Output = 'output',
@@ -32,39 +45,44 @@ export enum RequirementType {
   Older = 'older', // CHECKSEQUENCEVERIFY
 }
 
-export interface Input {
+interface ScriptPubKey {
+  version: -1 | 0 | 1;
+  program: string;
+}
+
+interface Input {
   hash: string;
   index: number;
-  script: string;
+  script: ScriptPubKey;
   value: number;
   asset: string;
 }
 
-export interface Output {
-  script: string;
+interface Output {
+  script: ScriptPubKey;
   value: string;
   asset: string;
   nonce: string;
 }
 
-export interface Function {
-  name: string;
-  functionInputs: Parameter[];
-  require: Requirement[];
-  asm: string[];
-}
-
-export interface Artifact {
-  contractName: string;
-  functions: Function[];
-  constructorInputs: Parameter[];
-}
-
-export function importArtifact(artifactFile: string): Artifact {
+function importArtifact(artifactFile: string): Artifact {
   return JSON.parse(fs.readFileSync(artifactFile, { encoding: 'utf-8' }));
 }
 
-export function exportArtifact(artifact: Artifact, targetFile: string): void {
+function exportArtifact(artifact: Artifact, targetFile: string): void {
   const jsonString = JSON.stringify(artifact, null, 2);
   fs.writeFileSync(targetFile, jsonString);
 }
+
+export {
+  Artifact,
+  Function,
+  Requirement,
+  RequirementType,
+  Parameter,
+  Input,
+  Output,
+  ScriptPubKey,
+  exportArtifact,
+  importArtifact,
+};

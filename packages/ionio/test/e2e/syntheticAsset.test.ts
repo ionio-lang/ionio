@@ -55,7 +55,7 @@ describe('SyntheticAsset', () => {
           payoutAmount,
           borrower.pubkey!.slice(1),
           issuer.pubkey!.slice(1),
-          issuer.output!.slice(2),
+          issuer.output!.slice(2), // segwit program
         ],
         network,
         ecc

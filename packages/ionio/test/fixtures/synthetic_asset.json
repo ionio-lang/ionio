@@ -26,7 +26,7 @@
       "type": "xonlypubkey"
     },
     {
-      "name": "issuerScript",
+      "name": "issuerScriptProgram",
       "type": "bytes"
     }
 
@@ -45,7 +45,10 @@
           "type": "output",
           "atIndex": 0,
           "expected": {
-            "script" : "0x6a",
+            "script" : {
+              "version": -1,
+              "program": "0x6a"
+            },
             "value": "$borrowAmount",
             "asset": "$borrowAsset",
             "nonce": ""
@@ -55,7 +58,10 @@
           "type": "output",
           "atIndex": 1,
           "expected": {
-            "script" : "$issuerScript",
+            "script" : {
+              "version": 0,
+              "program": "$issuerScriptProgram"
+            },
             "value": "$payoutAmount",
             "asset": "$collateralAsset",
             "nonce": ""
@@ -109,7 +115,7 @@
         "OP_INSPECTOUTPUTSCRIPTPUBKEY",
         "OP_0",
         "OP_EQUALVERIFY",
-        "$issuerScript",
+        "$issuerScriptProgram",
         "OP_EQUALVERIFY",
 
         "OP_1",

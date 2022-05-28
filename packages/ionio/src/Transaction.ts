@@ -196,23 +196,30 @@ export class Transaction implements TransactionInterface {
           ) {
             throw new Error('Invalid or incomplete artifact provided');
           }
+          const expectedScriptProperties = ['version', 'program'];
+          if (
+            !expectedScriptProperties.every(
+              property => property in (expected as Output).script
+            )
+          ) {
+            throw new Error('Invalid or incomplete artifact provided');
+          }
           const outputAtIndex = this.psbt.TX.outs[atIndex];
           // check the script
           const { script, value } = expected as Output;
-          const scriptBuffer = Buffer.from(
+          const scriptProgramBuffer = Buffer.from(
             replaceTemplateWithConstructorArg(
-              script,
+              script.program,
               this.constructorInputs,
               this.constructorArgs
             ),
             'hex'
           );
-          const slicedOutputScript = outputAtIndex.script
-            .toString('hex')
-            .startsWith('6a')
-            ? outputAtIndex.script
-            : outputAtIndex.script.slice(2);
-          if (!scriptBuffer.equals(slicedOutputScript))
+          const outputScript =
+            script.version < 0
+              ? outputAtIndex.script
+              : outputAtIndex.script.slice(2);
+          if (!scriptProgramBuffer.equals(outputScript))
             throw new Error(
               `required ${type} script does not match the transaction ${type} index ${atIndex}`
             );

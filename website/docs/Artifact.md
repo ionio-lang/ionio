@@ -147,7 +147,10 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
           "type": "output",
           "atIndex": 0,
           "expected": {
-            "script" : "$coldScriptProgram",
+            "script" : {
+              "version": 0,
+              "program": "$coldScriptProgram"
+            },
             "value": "$amount",
             "asset": "$assetHash",
             "nonce": ""
@@ -194,7 +197,10 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
           "type": "outputscript",
           "atIndex": 0,
           "expected": {
-            "script" : "$hotScriptProgram",
+            "script" : {
+              "version": 0,
+              "program": "$hotScriptProgram"
+            },
             "value": "$amount",
             "asset": "$assetID",
             "nonce": ""
@@ -239,34 +245,18 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
 
 ## TypeScript Specification
 
-### Artifact
 
 ```typescript
+
 interface Artifact {
   contractName: string;
   constructorInputs: Parameter[];
   functions: Function[];
 }
-```
 
-### Types
-
-```typescript
 interface Parameter {
   name: string;
   type: PrimitiveType;
-}
-
-enum PrimitiveType {
-  Number = 'number',
-  Bytes = 'bytes',
-  Boolean = 'bool',
-  Asset = 'asset',
-  Value = 'value',
-  Signature = 'sig',
-  DataSignature = 'datasig',
-  PublicKey = 'pubkey',
-  XOnlyPublicKey = 'xonlypubkey',
 }
 
 interface Function {
@@ -302,16 +292,21 @@ enum RequirementType {
   Older = 'older', // CHECKSEQUENCEVERIFY
 }
 
+interface ScriptPubKey {
+  version: -1 | 0 | 1;
+  program: string;
+}
+
 interface Input {
   hash: string;
   index: number;
-  script: string;
+  script: ScriptPubKey;
   value: number;
   asset: string;
 }
 
 interface Output {
-  script: string;
+  script: ScriptPubKey;
   value: string;
   asset: string;
   nonce: string;
