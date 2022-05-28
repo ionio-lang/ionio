@@ -152,7 +152,7 @@ export class Contract implements ContractInterface {
         return encodeArgument(arg, artifactFunction.functionInputs[index].type);
       });
 
-      // check requirements 
+      // check requirements
       checkRequirements(artifactFunction.require);
 
       return new Transaction(
