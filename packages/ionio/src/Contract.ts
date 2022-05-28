@@ -14,6 +14,7 @@ import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
+import { checkRequirements } from './Requirement';
 
 export interface ContractInterface {
   name: string;
@@ -150,6 +151,9 @@ export class Contract implements ContractInterface {
         if (isSigner(arg)) return;
         return encodeArgument(arg, artifactFunction.functionInputs[index].type);
       });
+
+      // check requirements 
+      checkRequirements(artifactFunction.require);
 
       return new Transaction(
         this.artifact.constructorInputs,
