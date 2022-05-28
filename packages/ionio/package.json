@@ -1,0 +1,65 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "@ionio-lang/ionio",
+  "author": "tiero",
+  "module": "dist/ionio.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/ionio.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/ionio.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^7.0.8",
+    "axios": "^0.27.2",
+    "bip32": "^3.0.1",
+    "husky": "^8.0.1",
+    "randombytes": "^2.1.0",
+    "size-limit": "^7.0.8",
+    "tiny-secp256k1": "^2.2.1",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+  },
+  "jest": {
+    "testTimeout": 15000
+  }
+}

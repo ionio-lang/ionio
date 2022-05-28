@@ -1,0 +1,30 @@
+{
+  "contractName": "Calculator",
+  "constructorInputs": [
+    {
+      "name": "sum",
+      "type": "number"
+    }
+  ],
+  "functions": [
+    {
+      "name": "sumMustBeThree",
+      "functionInputs": [
+        {
+          "name": "a",
+          "type": "number"
+        },
+        {
+          "name": "b",
+          "type": "number"
+        }
+      ],
+      "require": [],
+      "asm": [
+        "OP_ADD",
+        "$sum",
+        "OP_EQUAL"
+      ]
+    }
+  ]
+}
