@@ -28,8 +28,8 @@ export enum RequirementType {
   OutputAsset = 'outputasset',
   OutputNonce = 'outputnonce',
   // Timelocks
-  After = 'after',
-  Older = 'older',
+  After = 'after', // CHECKLOCKTIMEVERIFY
+  Older = 'older', // CHECKSEQUENCEVERIFY
 }
 
 export interface Input {
