@@ -4,6 +4,7 @@ import {
   confidential,
   Psbt,
   script,
+  TxOutput,
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import {
@@ -14,11 +15,11 @@ import {
 } from 'liquidjs-lib/src/bip341';
 import { Network } from 'liquidjs-lib/src/networks';
 import { Argument, encodeArgument } from './Argument';
-import { Function, Output, Parameter } from './Artifact';
+import { Function, Parameter } from './Artifact';
 import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
-import { Utxo } from './interfaces';
 import { isSigner } from './Signer';
-import { replaceTemplateWithConstructorArg } from './utils/template';
+import { Introspect } from './Introspect';
+import { RequiredOutput } from './Requirement';
 
 export interface TransactionInterface {
   psbt: Psbt;
@@ -40,6 +41,12 @@ export interface TransactionInterface {
 export interface TaprootData {
   leaves: TaprootLeaf[];
   parity: number;
+}
+
+export interface Utxo {
+  txid: string;
+  vout: number;
+  prevout: TxOutput;
 }
 
 export class Transaction implements TransactionInterface {
@@ -167,77 +174,29 @@ export class Transaction implements TransactionInterface {
     }
 
     for (const { type, atIndex, expected } of this.artifactFunction.require) {
-      // do the checks on introspection)
+      // do the checks
       switch (type) {
         case 'input':
-          if (atIndex === undefined)
-            throw new Error(
-              `atIndex field is required for requirement of type ${type}`
-            );
-          if (atIndex >= this.psbt.data.inputs.length)
+          if (atIndex! >= this.psbt.data.inputs.length)
             throw new Error(`${type} is required at index ${atIndex}`);
           break;
         case 'output':
-          if (atIndex === undefined)
-            throw new Error(
-              `atIndex field is required for requirement of type ${type}`
-            );
-          if (atIndex >= this.psbt.data.outputs.length)
+          if (atIndex! >= this.psbt.data.outputs.length)
             throw new Error(`${type} is required at index ${atIndex}`);
-          if (!expected)
-            throw new Error(
-              `expected field of type ${type} is required at index ${atIndex}`
-            );
-          const expectedProperties = ['script', 'value', 'asset', 'nonce'];
-          if (
-            !expectedProperties.every(
-              property => property in (expected as Output)
-            )
-          ) {
-            throw new Error('Invalid or incomplete artifact provided');
-          }
-          const expectedScriptProperties = ['version', 'program'];
-          if (
-            !expectedScriptProperties.every(
-              property => property in (expected as Output).script
-            )
-          ) {
-            throw new Error('Invalid or incomplete artifact provided');
-          }
-          const outputAtIndex = this.psbt.TX.outs[atIndex];
-          // check the script
-          const { script, value } = expected as Output;
-          const scriptProgramBuffer = Buffer.from(
-            replaceTemplateWithConstructorArg(
-              script.program,
-              this.constructorInputs,
-              this.constructorArgs
-            ),
-            'hex'
+
+          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const { script, value, nonce, asset } = expected as RequiredOutput;
+
+          const introspect = new Introspect(
+            atIndex!,
+            type,
+            this.constructorInputs,
+            this.constructorArgs
           );
-          const outputScript =
-            script.version < 0
-              ? outputAtIndex.script
-              : outputAtIndex.script.slice(2);
-          if (!scriptProgramBuffer.equals(outputScript))
-            throw new Error(
-              `required ${type} script does not match the transaction ${type} index ${atIndex}`
-            );
-          // check the value
-          const valueBuffer = Buffer.from(
-            replaceTemplateWithConstructorArg(
-              value,
-              this.constructorInputs,
-              this.constructorArgs
-            ),
-            'hex'
-          );
-          const outputValue = Buffer.from(outputAtIndex.value);
-          const reversedOutputValue = outputValue.slice(1).reverse();
-          if (!valueBuffer.equals(reversedOutputValue))
-            throw new Error(
-              `required ${type} value does not match the transaction ${type} index ${atIndex}`
-            );
+          introspect.checkOutputValue(value, outputAtIndex.value);
+          introspect.checkOutputScript(script, outputAtIndex.script);
+          introspect.checkOutputAsset(asset, outputAtIndex.asset);
+          introspect.checkOutputNonce(nonce, outputAtIndex.nonce);
           break;
         case 'after':
         case 'older':
