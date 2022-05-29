@@ -268,11 +268,14 @@ interface Function {
 
 interface Requirement {
   type: RequirementType;
-  expected: Input | Output | number | string | undefined;
+  expected: RequiredInput | RequiredOutput | number | string | undefined;
   atIndex?: number; // for input* or output* requirements only
 }
 
 enum RequirementType {
+  // Timelocks
+  After = 'after', // CHECKLOCKTIMEVERIFY
+  Older = 'older', // CHECKSEQUENCEVERIFY
   // Input
   Input = 'input',
   Output = 'output',
@@ -287,9 +290,6 @@ enum RequirementType {
   OutputScript = 'outputscript',
   OutputAsset = 'outputasset',
   OutputNonce = 'outputnonce',
-  // Timelocks
-  After = 'after', // CHECKLOCKTIMEVERIFY
-  Older = 'older', // CHECKSEQUENCEVERIFY
 }
 
 interface ScriptPubKey {
@@ -297,7 +297,7 @@ interface ScriptPubKey {
   program: string;
 }
 
-interface Input {
+interface RequiredInput {
   hash: string;
   index: number;
   script: ScriptPubKey;
@@ -305,7 +305,7 @@ interface Input {
   asset: string;
 }
 
-interface Output {
+interface RequiredOutput {
   script: ScriptPubKey;
   value: string;
   asset: string;
