@@ -1,4 +1,4 @@
-import { Transaction } from './Transaction';
+import { Transaction, Utxo } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
 import { Artifact, Function } from './Artifact';
 import { Network } from 'liquidjs-lib/src/networks';
@@ -11,10 +11,10 @@ import {
 } from 'liquidjs-lib/src/bip341';
 import { address, script, TxOutput } from 'liquidjs-lib';
 import { H_POINT } from './constants';
-import { Utxo } from './interfaces';
 import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
+import { checkRequirements } from './Requirement';
 
 export interface ContractInterface {
   name: string;
@@ -151,6 +151,9 @@ export class Contract implements ContractInterface {
         if (isSigner(arg)) return;
         return encodeArgument(arg, artifactFunction.functionInputs[index].type);
       });
+
+      // check requirements
+      checkRequirements(artifactFunction.require);
 
       return new Transaction(
         this.artifact.constructorInputs,

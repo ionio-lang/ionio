@@ -1,9 +1,20 @@
 import { script } from 'liquidjs-lib';
-import { PrimitiveType } from './interfaces';
 import { isSigner, Signer } from './Signer';
 import { Value } from './utils/value';
 
 export type Argument = number | boolean | string | Buffer | Signer;
+
+export enum PrimitiveType {
+  Number = 'number',
+  Bytes = 'bytes',
+  Boolean = 'bool',
+  Asset = 'asset',
+  Value = 'value',
+  Signature = 'sig',
+  DataSignature = 'datasig',
+  PublicKey = 'pubkey',
+  XOnlyPublicKey = 'xonlypubkey',
+}
 
 export function encodeArgument(
   value: Argument,
