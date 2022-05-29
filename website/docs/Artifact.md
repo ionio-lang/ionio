@@ -68,7 +68,7 @@ Each **Function** contains the following information:
 
 - `name` it's a label to reference the function.
 - `functionInputs` it's a list of values that must be passed on the witness stack to satisfy the execution of the script. Each input must have a `type` and a `name` to allow the `asm` list of opcodes to make use of [$template](#template-strings) strings to replace them with inputs and to allow libraries and SDKs to do type checking and sanitizations.
-- `require` it's a list of all possibile covenants than encumber the execution of the script. Each `Requirement` must have a `type` and an `expected` value for **timelocks** covenants and also an `atIndex` for **introspection** ones.
+- `require` it's a list of all possibile covenants that encumber the execution of the script. Each `Requirement` must have a `type` and an `expected` value for **timelocks** covenants and also an `atIndex` for **introspection** ones.
 - `asm` it'a a list of opcodes that will be executed by the script on the blockchain. Hex-encoded bytes must be prefixed with **`0x`** and to make use of the `constructorInputs` and `functionInputs` parameters you can use [$template](#template-strings) strings to replace them in final script compilation
 
 
@@ -76,7 +76,7 @@ Each **Function** contains the following information:
 
 Each item in `constructorInputs` and `functionInputs` must have a `type` that defines the type of the input. The following types are available:
 
-- **number** it's an integer used and transaltes to **CScriptNum** type in Bitcoin Core.
+- **number** it's an integer used and translates to **CScriptNum** type in Bitcoin Core.
 - **bool** it's a boolean value used and translates to **OP_TRUE** and **OP_FALSE**.
 - **asset** it's a Elements asset hash
 - **value** it's an Elements value 
@@ -127,11 +127,11 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
     },
     {
       "name": "amount",
-      "type" : "value"
+      "type": "value"
     },
     {
       "name": "assetID",
-      "type" : "asset"
+      "type": "asset"
     },
     {
       "name": "delay",
