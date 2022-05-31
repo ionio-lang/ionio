@@ -9,22 +9,23 @@ describe('CheckSigFromStack', () => {
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
 
-
   beforeAll(async () => {
     // eslint-disable-next-line global-require
     const artifact = require('../fixtures/checksigfromstack.json');
     contract = new Contract(
-      artifact, 
+      artifact,
       [
-        Buffer.from("68656c6c6f", "hex"),
-        Buffer.from("f09f8c8e", "hex"), 
-        Buffer.from("25d1dff95105f5253c4022f628a996ad3a0d95fbf21d468a1b33f8c160d8f517", "hex")
-      ], 
-      network, 
+        Buffer.from('68656c6c6f', 'hex'),
+        Buffer.from('f09f8c8e', 'hex'),
+        Buffer.from(
+          '25d1dff95105f5253c4022f628a996ad3a0d95fbf21d468a1b33f8c160d8f517',
+          'hex'
+        ),
+      ],
+      network,
       ecc
     );
 
-  
     const response = await faucetComplex(contract.address, 0.0001);
     prevout = response.prevout;
     utxo = response.utxo;
@@ -32,7 +33,9 @@ describe('CheckSigFromStack', () => {
 
   describe('csfs', () => {
     it('should generate the right address', async () => {
-      expect(contract.address).toStrictEqual('ert1pmdmu2kdjg2zepzjdzmefjqytk7jr7cwqfnzgpsdz925803vatkgshnjpn3');
+      expect(contract.address).toStrictEqual(
+        'ert1pmdmu2kdjg2zepzjdzmefjqytk7jr7cwqfnzgpsdz925803vatkgshnjpn3'
+      );
     });
 
     it('should be able to unlock funds with data signature', async () => {
@@ -40,12 +43,14 @@ describe('CheckSigFromStack', () => {
       const amount = 9900;
       const feeAmount = 100;
 
-      const datasig = Buffer.from('22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d', 'hex');
-
+      const datasig = Buffer.from(
+        '22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d',
+        'hex'
+      );
 
       // lets instantiate the contract using the funding transacton
       const instance = contract.from(utxo.txid, utxo.vout, prevout);
-      
+
       const tx = await instance.functions
         .myFunction(datasig)
         .withRecipient(to, amount)
@@ -58,5 +63,4 @@ describe('CheckSigFromStack', () => {
       expect(txid).toBeDefined();
     });
   });
-
 });

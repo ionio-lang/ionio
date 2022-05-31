@@ -20,7 +20,12 @@ import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
 import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
 import { RequiredOutput } from './Requirement';
-import { isUnblindedOutput, Output, UnblindedOutput, isConfidentialOutput } from 'ldk';
+import {
+  isUnblindedOutput,
+  Output,
+  UnblindedOutput,
+  isConfidentialOutput,
+} from 'ldk';
 
 export interface TransactionInterface {
   psbt: Psbt;
@@ -48,7 +53,10 @@ export class Transaction implements TransactionInterface {
   public psbt: Psbt;
 
   private fundingUtxoIndex: number = 0;
-  private inputBlindingData = new Map<number, confidential.UnblindOutputResult>();
+  private inputBlindingData = new Map<
+    number,
+    confidential.UnblindOutputResult
+  >();
   private outputBlindingPubKeys = new Map<number, Buffer>();
 
   constructor(
@@ -126,7 +134,7 @@ export class Transaction implements TransactionInterface {
       const blindKey = address.fromConfidential(recipientAddress).blindingKey;
       const index = this.psbt.data.outputs.length - 1;
       this.outputBlindingPubKeys.set(index, blindKey);
-    } catch(ignore) {}
+    } catch (ignore) {}
 
     return this;
   }
@@ -203,7 +211,6 @@ export class Transaction implements TransactionInterface {
         );
       });
 
-
     // check for a signature to be made
     for (const arg of this.functionArgs) {
       if (!isSigner(arg)) continue;
@@ -224,16 +231,17 @@ export class Transaction implements TransactionInterface {
 
     // check for blinding to be made
     if (this.inputBlindingData.size > 0) {
-      if (this.outputBlindingPubKeys.size === 0) 
-        throw new Error('if one confidential input is spent, at least one of the outputs must be blinded');
+      if (this.outputBlindingPubKeys.size === 0)
+        throw new Error(
+          'if one confidential input is spent, at least one of the outputs must be blinded'
+        );
 
       this.psbt.blindOutputsByIndex(
         Psbt.ECCKeysGenerator(this.ecclib),
         this.inputBlindingData,
-        this.outputBlindingPubKeys,
-      )
+        this.outputBlindingPubKeys
+      );
     }
-
 
     this.psbt.finalizeInput(this.fundingUtxoIndex!, (_, input) => {
       return {
