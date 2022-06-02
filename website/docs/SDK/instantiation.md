@@ -12,7 +12,7 @@ The `Contract` class is used to represent a Ionio contract in a JavaScript objec
 ```ts
 new Contract(
   artifact: Artifact,
-  constructorInputs :Argument[]
+  constructorInputs: Argument[]
   network: Network
   eccLib: TinySecp256k1Interface
 )

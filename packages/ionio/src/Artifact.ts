@@ -5,7 +5,7 @@ import { Requirement } from './Requirement';
 interface Artifact {
   contractName: string;
   constructorInputs: Parameter[];
-  functions: Function[];
+  functions: ArtifactFunction[];
 }
 
 interface Parameter {
@@ -13,7 +13,7 @@ interface Parameter {
   type: PrimitiveType;
 }
 
-interface Function {
+interface ArtifactFunction {
   name: string;
   functionInputs: Parameter[];
   require: Requirement[];
@@ -31,7 +31,7 @@ function exportArtifact(artifact: Artifact, targetFile: string): void {
 
 export {
   Artifact,
-  Function,
+  ArtifactFunction,
   Requirement,
   Parameter,
   exportArtifact,
