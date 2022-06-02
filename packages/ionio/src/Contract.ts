@@ -1,6 +1,6 @@
 import { Transaction, Utxo } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
-import { Artifact, Function } from './Artifact';
+import { Artifact, ContractFunction } from './Artifact';
 import { Network } from 'liquidjs-lib/src/networks';
 import {
   toHashTree,
@@ -136,7 +136,7 @@ export class Contract implements ContractInterface {
   }
 
   private createFunction(
-    artifactFunction: Function,
+    artifactFunction: ContractFunction,
     selector: number
   ): ContractFunction {
     return (...functionArgs: Argument[]) => {
