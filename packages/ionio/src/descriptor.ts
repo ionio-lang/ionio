@@ -3,6 +3,11 @@ import { H_POINT } from './constants';
 
 const H_POINT_XONLY_HEX = H_POINT.slice(1).toString('hex');
 
+/**
+ * build the marina custom descriptor for a given artifact
+ * token "$" are not replaced in the asm string, consider using transformArtifact to replace them
+ * @param artifact the artifact to build the descriptor for
+ */
 export function toDescriptor(artifact: Artifact) {
   const { functions } = artifact;
   const leaves = functions.map(toASMstring);

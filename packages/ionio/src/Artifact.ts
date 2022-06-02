@@ -22,6 +22,11 @@ interface Function {
 
 type ArtifactMapper = (artifact: Artifact) => Artifact;
 
+/**
+ * compile one of the constructor input
+ * @param name name of the input to compile
+ * @param arg argument value as input
+ */
 function withConstructorInput(name: string, arg: Argument): ArtifactMapper {
   return (artifact: Artifact): Artifact => {
     // compile the constructor input
@@ -46,6 +51,11 @@ function withConstructorInput(name: string, arg: Argument): ArtifactMapper {
   };
 }
 
+/**
+ * change the name of one of the constructor input
+ * @param toreplace name of the input name to replace
+ * @param replaceby new name of the input
+ */
 function withCustomConstructorInputName(
   toreplace: string,
   replaceby: string
@@ -83,7 +93,9 @@ function composeMappers(...mappers: ArtifactMapper[]): ArtifactMapper {
     return mappers.reduce((acc, mapper) => mapper(acc), artifact);
   };
 }
-
+/**
+ * Apply a set of mappers to an artifact
+ */
 function transformArtifact(
   artifact: Artifact,
   ...mappers: ArtifactMapper[]
