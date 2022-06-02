@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { alicePk, network } from '../fixtures/vars';
-import { payments, TxOutput } from 'liquidjs-lib';
+import { payments, TxOutput } from 'ldk';
 import { broadcast, faucetComplex, getSignerWithECPair } from '../utils';
 import { Signer } from '../../src/Signer';
 import { Artifact } from '../../src/Artifact';

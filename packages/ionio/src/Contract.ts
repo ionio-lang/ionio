@@ -1,15 +1,7 @@
 import { Transaction, Utxo } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
 import { Artifact, Function } from './Artifact';
-import { Network } from 'liquidjs-lib/src/networks';
-import {
-  toHashTree,
-  BIP341Factory,
-  HashTree,
-  TinySecp256k1Interface,
-  TaprootLeaf,
-} from 'liquidjs-lib/src/bip341';
-import { address, script, TxOutput } from 'liquidjs-lib';
+import { address, script, TxOutput, bip341, NetworkExtended as Network } from 'ldk';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
@@ -27,7 +19,7 @@ export interface ContractInterface {
   leaves: { scriptHex: string }[];
   scriptPubKey: Buffer;
   from(txid: string, vout: number, prevout: TxOutput): ContractInterface;
-  getTaprootTree(): HashTree;
+  getTaprootTree(): bip341.HashTree;
 }
 
 export class Contract implements ContractInterface {
@@ -41,7 +33,7 @@ export class Contract implements ContractInterface {
     [name: string]: ContractFunction;
   };
 
-  leaves: TaprootLeaf[];
+  leaves: bip341.TaprootLeaf[];
   scriptPubKey: Buffer;
   private parity: number;
 
@@ -49,7 +41,7 @@ export class Contract implements ContractInterface {
     private artifact: Artifact,
     private constructorArgs: Argument[],
     private network: Network,
-    private ecclib: TinySecp256k1Interface
+    private ecclib: bip341.TinySecp256k1Interface
   ) {
     const expectedProperties = [
       'contractName',
@@ -101,11 +93,11 @@ export class Contract implements ContractInterface {
     // name
     this.name = artifact.contractName;
 
-    const bip341 = BIP341Factory(this.ecclib);
-    const hashTree = toHashTree(this.leaves);
+    const bip341API = bip341.BIP341Factory(this.ecclib);
+    const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & addressl
-    this.scriptPubKey = bip341.taprootOutputScript(H_POINT, hashTree);
+    this.scriptPubKey = bip341API.taprootOutputScript(H_POINT, hashTree);
     this.address = address.fromOutputScript(this.scriptPubKey, this.network);
 
     // parity bit
@@ -115,8 +107,8 @@ export class Contract implements ContractInterface {
     //this.bytesize = calculateBytesize(this.leaves);
   }
 
-  getTaprootTree(): HashTree {
-    return toHashTree(this.leaves, true);
+  getTaprootTree(): bip341.HashTree {
+    return bip341.toHashTree(this.leaves, true);
   }
 
   from(txid: string, vout: number, prevout: TxOutput): this {

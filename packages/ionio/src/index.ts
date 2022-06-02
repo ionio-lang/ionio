@@ -6,3 +6,4 @@ export * from './Signer';
 export * from './Requirement';
 export * from './Transaction';
 export * from './constants';
+export * from './descriptor';

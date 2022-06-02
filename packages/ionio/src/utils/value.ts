@@ -1,4 +1,4 @@
-import { confidential } from 'liquidjs-lib';
+import { confidential } from 'ldk';
 
 export class Value {
   private value: Buffer;

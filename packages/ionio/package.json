@@ -57,7 +57,7 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
-    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+    "ldk": "git+https://github.com/louisinger/ldk.git#bip371-liquidjs"
   },
   "jest": {
     "testTimeout": 15000

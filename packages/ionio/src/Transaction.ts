@@ -6,14 +6,9 @@ import {
   script,
   TxOutput,
   witnessStackToScriptWitness,
-} from 'liquidjs-lib';
-import {
-  findScriptPath,
-  tapLeafHash,
-  TaprootLeaf,
-  toHashTree,
-} from 'liquidjs-lib/src/bip341';
-import { Network } from 'liquidjs-lib/src/networks';
+  bip341,
+  NetworkExtended as Network,
+} from 'ldk';
 import { Argument, encodeArgument } from './Argument';
 import { Function, Parameter } from './Artifact';
 import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
@@ -39,7 +34,7 @@ export interface TransactionInterface {
 }
 
 export interface TaprootData {
-  leaves: TaprootLeaf[];
+  leaves: bip341.TaprootLeaf[];
   parity: number;
 }
 
@@ -68,9 +63,9 @@ export class Transaction implements TransactionInterface {
     if (this.fundingUtxo) {
       const leafToSpend = this.taprootData.leaves[this.selector];
       const leafVersion = leafToSpend.version || LEAF_VERSION_TAPSCRIPT;
-      const leafHash = tapLeafHash(leafToSpend);
-      const hashTree = toHashTree(this.taprootData.leaves);
-      const path = findScriptPath(hashTree, leafHash);
+      const leafHash = bip341.tapLeafHash(leafToSpend);
+      const hashTree = bip341.toHashTree(this.taprootData.leaves);
+      const path = bip341.findScriptPath(hashTree, leafHash);
 
       const parityBit = Buffer.of(leafVersion + this.taprootData.parity);
 

@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import { tapLeafHash } from 'liquidjs-lib/src/bip341';
-import { Psbt, Transaction, TxOutput } from 'liquidjs-lib';
-import { Network } from 'liquidjs-lib/src/networks';
+import { Psbt, Transaction, TxOutput } from 'ldk';
+import { NetworkExtended as Network, bip341 } from 'ldk';
 import { Signer } from '../src/Signer';
 const APIURL = process.env.APIURL || 'http://localhost:3001';
 
@@ -149,7 +148,7 @@ export function getSignerWithECPair(
         const script = input.tapLeafScript![0].script;
         if (!script) continue;
 
-        const leafHash = tapLeafHash({ scriptHex: script.toString('hex') });
+        const leafHash = bip341.tapLeafHash({ scriptHex: script.toString('hex') });
 
         // get the sig hash for each input
         const sighashForSig = ptx.TX.hashForWitnessV1(
