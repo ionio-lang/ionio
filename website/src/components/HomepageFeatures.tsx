@@ -14,7 +14,7 @@ const FeatureList: FeatureItem[] = [
     image: '/img/undraw_docusaurus_mountain.svg',
     description: (
       <>
-        Smart contract on Elements blockchain are designed to be scalable and powerful thanks to introspection and UTXO model.
+        Smart contract on Elements blockchains are designed to be scalable and powerful thanks to introspection and UTXO model.
       </>
     ),
   },
@@ -33,7 +33,7 @@ const FeatureList: FeatureItem[] = [
     image: '/img/undraw_docusaurus_react.svg',
     description: (
       <>
-        Ionio is powered by Simplicity, a functional language without loops and recursion, designed to write Bitcoin Smart Contracts in a structured way, enabling static analysis, composition and more. 
+        Ionio is powered by Simplicity, a functional language without loops and recursion, designed to write Bitcoin Smart Contracts in a structured way. 
       </>
     ),
   },

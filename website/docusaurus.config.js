@@ -6,13 +6,13 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Ionio Language',
-  tagline: 'Easily write and interact with Simplicity smart contracts for Elements-based blockchains, such as Liquid Network.',
+  title: 'Ionio - Smart contract language',
+  tagline: 'Easily write and interact with Simplicity smart contracts for the Elements blockchain',
   url: 'https://ionio-lang.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
   organizationName: 'ionio-lang', // Usually your GitHub org/user name.
   projectName: 'ionio', // Usually your repo name.
 
@@ -41,6 +41,7 @@ const config = {
         logo: {
           alt: 'Ionio Logo',
           src: 'img/logo.svg',
+          target: '_self',
         },
         items: [
           {
