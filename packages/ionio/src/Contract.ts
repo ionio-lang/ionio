@@ -1,7 +1,13 @@
 import { Transaction, Utxo } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
 import { Artifact, Function } from './Artifact';
-import { address, script, TxOutput, bip341, NetworkExtended as Network } from 'ldk';
+import {
+  address,
+  script,
+  TxOutput,
+  bip341,
+  NetworkExtended as Network,
+} from 'ldk';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';

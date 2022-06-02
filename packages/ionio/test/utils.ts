@@ -148,7 +148,9 @@ export function getSignerWithECPair(
         const script = input.tapLeafScript![0].script;
         if (!script) continue;
 
-        const leafHash = bip341.tapLeafHash({ scriptHex: script.toString('hex') });
+        const leafHash = bip341.tapLeafHash({
+          scriptHex: script.toString('hex'),
+        });
 
         // get the sig hash for each input
         const sighashForSig = ptx.TX.hashForWitnessV1(

@@ -1,5 +1,4 @@
-import { bip341, crypto } from "ldk";
-
+import { bip341, crypto } from 'ldk';
 
 export function tweakPublicKey(
   publicKey: Buffer,
