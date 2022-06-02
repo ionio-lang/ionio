@@ -15,7 +15,7 @@ import {
 } from 'liquidjs-lib/src/bip341';
 import { Network } from 'liquidjs-lib/src/networks';
 import { Argument, encodeArgument } from './Argument';
-import { ContractFunction, Parameter } from './Artifact';
+import { ArtifactFunction, Parameter } from './Artifact';
 import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
 import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
@@ -57,7 +57,7 @@ export class Transaction implements TransactionInterface {
   constructor(
     private constructorInputs: Parameter[],
     private constructorArgs: Argument[],
-    private artifactFunction: ContractFunction,
+    private artifactFunction: ArtifactFunction,
     private functionArgs: Argument[],
     private selector: number,
     private fundingUtxo: Utxo | undefined,
