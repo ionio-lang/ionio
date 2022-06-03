@@ -1,0 +1,37 @@
+{
+  "contractName": "myContract",
+  "constructorInputs": [
+    {
+      "name": "param0",
+      "type": "bytes"
+    },
+    {
+      "name": "param1",
+      "type": "bytes"
+    },
+    {
+      "name": "param4",
+      "type": "bytes"
+    }
+  ],
+  "functions": [
+    {
+      "name": "myFunction",
+      "functionInputs": [
+        {
+          "name": "datasignature5",
+          "type": "datasig"
+        }
+      ],
+      "require": [],
+      "asm": [
+        "$param0",
+        "$param1",
+        "OP_CAT",
+        "OP_SHA256",
+        "$param4",
+        "OP_CHECKSIGFROMSTACK"
+      ]
+    }
+  ]
+}

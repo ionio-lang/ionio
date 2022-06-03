@@ -4,13 +4,13 @@ import {
   confidential,
   Psbt,
   script,
-  TxOutput,
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import {
   findScriptPath,
   tapLeafHash,
   TaprootLeaf,
+  TinySecp256k1Interface,
   toHashTree,
 } from 'liquidjs-lib/src/bip341';
 import { Network } from 'liquidjs-lib/src/networks';
@@ -20,10 +20,16 @@ import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
 import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
 import { RequiredOutput } from './Requirement';
+import {
+  isUnblindedOutput,
+  Output,
+  UnblindedOutput,
+  isConfidentialOutput,
+} from 'ldk';
 
 export interface TransactionInterface {
   psbt: Psbt;
-  withUtxo(outpoint: Utxo): TransactionInterface;
+  withUtxo(outpoint: Output | UnblindedOutput): TransactionInterface;
   withRecipient(
     addressOrScript: string | Buffer,
     amount: number,
@@ -43,16 +49,15 @@ export interface TaprootData {
   parity: number;
 }
 
-export interface Utxo {
-  txid: string;
-  vout: number;
-  prevout: TxOutput;
-}
-
 export class Transaction implements TransactionInterface {
   public psbt: Psbt;
 
   private fundingUtxoIndex: number = 0;
+  private inputBlindingData = new Map<
+    number,
+    confidential.UnblindOutputResult
+  >();
+  private outputBlindingPubKeys = new Map<number, Buffer>();
 
   constructor(
     private constructorInputs: Parameter[],
@@ -60,9 +65,10 @@ export class Transaction implements TransactionInterface {
     private artifactFunction: ArtifactFunction,
     private functionArgs: Argument[],
     private selector: number,
-    private fundingUtxo: Utxo | undefined,
+    private fundingUtxo: Output | UnblindedOutput | undefined,
     private taprootData: TaprootData,
-    private network: Network
+    private network: Network,
+    private ecclib: TinySecp256k1Interface
   ) {
     this.psbt = new Psbt({ network: this.network });
     if (this.fundingUtxo) {
@@ -96,24 +102,26 @@ export class Transaction implements TransactionInterface {
     }
   }
 
-  withUtxo(outpoint: Utxo): this {
+  withUtxo(utxo: Output | UnblindedOutput): this {
     this.psbt.addInput({
-      hash: outpoint.txid,
-      index: outpoint.vout,
-      witnessUtxo: outpoint.prevout,
+      hash: utxo.txid,
+      index: utxo.vout,
+      witnessUtxo: utxo.prevout,
     });
+    // only add unblind data if the prevout of the input is confidential
+    if (utxo && isUnblindedOutput(utxo) && isConfidentialOutput(utxo.prevout)) {
+      const index = this.psbt.data.inputs.length - 1;
+      this.inputBlindingData.set(index, utxo.unblindData);
+    }
     return this;
   }
 
   withRecipient(
-    addressOrScript: string | Buffer,
+    recipientAddress: string,
     value: number,
     assetID: string = this.network.assetHash
   ): this {
-    let script = addressOrScript as Buffer;
-    if (typeof addressOrScript === 'string') {
-      script = address.toOutputScript(addressOrScript);
-    }
+    let script = address.toOutputScript(recipientAddress);
 
     this.psbt.addOutput({
       script,
@@ -121,6 +129,12 @@ export class Transaction implements TransactionInterface {
       asset: AssetHash.fromHex(assetID, false).bytes,
       nonce: Buffer.alloc(0),
     });
+
+    try {
+      const blindKey = address.fromConfidential(recipientAddress).blindingKey;
+      const index = this.psbt.data.outputs.length - 1;
+      this.outputBlindingPubKeys.set(index, blindKey);
+    } catch (ignore) {}
 
     return this;
   }
@@ -154,24 +168,6 @@ export class Transaction implements TransactionInterface {
 
   async unlock(): Promise<this> {
     let witnessStack: Buffer[] = [];
-
-    // check for signature to be made
-    for (const arg of this.functionArgs) {
-      if (!isSigner(arg)) continue;
-
-      const signedPtxBase64 = await arg.signTransaction(this.psbt.toBase64());
-      const signedPtx = Psbt.fromBase64(signedPtxBase64);
-      this.psbt = signedPtx;
-
-      const { tapKeySig, tapScriptSig } = this.psbt.data.inputs[
-        this.fundingUtxoIndex
-      ];
-      if (tapScriptSig && tapScriptSig.length > 0) {
-        witnessStack = [...tapScriptSig.map(s => s.signature), ...witnessStack];
-      } else if (tapKeySig) {
-        witnessStack = [tapKeySig, ...witnessStack];
-      }
-    }
 
     for (const { type, atIndex, expected } of this.artifactFunction.require) {
       // do the checks
@@ -214,6 +210,38 @@ export class Transaction implements TransactionInterface {
           this.artifactFunction.functionInputs[index].type
         );
       });
+
+    // check for a signature to be made
+    for (const arg of this.functionArgs) {
+      if (!isSigner(arg)) continue;
+
+      const signedPtxBase64 = await arg.signTransaction(this.psbt.toBase64());
+      const signedPtx = Psbt.fromBase64(signedPtxBase64);
+      this.psbt = signedPtx;
+
+      const { tapKeySig, tapScriptSig } = this.psbt.data.inputs[
+        this.fundingUtxoIndex
+      ];
+      if (tapScriptSig && tapScriptSig.length > 0) {
+        witnessStack = [...tapScriptSig.map(s => s.signature), ...witnessStack];
+      } else if (tapKeySig) {
+        witnessStack = [tapKeySig, ...witnessStack];
+      }
+    }
+
+    // check for blinding to be made
+    if (this.inputBlindingData.size > 0) {
+      if (this.outputBlindingPubKeys.size === 0)
+        throw new Error(
+          'if one confidential input is spent, at least one of the outputs must be blinded'
+        );
+
+      this.psbt.blindOutputsByIndex(
+        Psbt.ECCKeysGenerator(this.ecclib),
+        this.inputBlindingData,
+        this.outputBlindingPubKeys
+      );
+    }
 
     this.psbt.finalizeInput(this.fundingUtxoIndex!, (_, input) => {
       return {

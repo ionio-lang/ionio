@@ -21,7 +21,6 @@ describe('Calculator', () => {
 
   describe('sumMustBeThree', () => {
     it('should succeed when the sum of a and b is correct', async () => {
-      //const myself = payments.p2wpkh({ pubkey: alice.publicKey }).address!;
       const to = payments.p2wpkh({ pubkey: bob.publicKey }).address!;
       const amount = 9900;
       const feeAmount = 100;
