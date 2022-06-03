@@ -5,7 +5,7 @@ import { Requirement } from './Requirement';
 interface Artifact {
   contractName: string;
   constructorInputs: Parameter[];
-  functions: Function[];
+  functions: ArtifactFunction[];
 }
 
 interface Parameter {
@@ -13,7 +13,7 @@ interface Parameter {
   type: PrimitiveType;
 }
 
-interface Function {
+interface ArtifactFunction {
   name: string;
   functionInputs: Parameter[];
   require: Requirement[];
@@ -23,8 +23,8 @@ interface Function {
 function replaceASMtoken(
   toreplace: string,
   by: string
-): (f: Function) => Function {
-  return (f: Function): Function => ({
+): (f: ArtifactFunction) => ArtifactFunction {
+  return (f: ArtifactFunction): ArtifactFunction => ({
     ...f,
     asm: f.asm.map(token => {
       if (token === toreplace) {
@@ -125,7 +125,7 @@ function exportArtifact(artifact: Artifact, targetFile: string): void {
 
 export {
   Artifact,
-  Function,
+  ArtifactFunction,
   Requirement,
   Parameter,
   exportArtifact,

@@ -20,6 +20,14 @@
         "$pubKey",
         "OP_CHECKSIG"
       ]
+    },
+    {
+      "name": "unsafe",
+      "functionInputs": [],
+      "require": [],
+      "asm": [
+        "OP_TRUE"
+      ]
     }
   ]
 }

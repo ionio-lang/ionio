@@ -1,4 +1,4 @@
-import { Artifact, Function } from './Artifact';
+import { Artifact, ArtifactFunction } from './Artifact';
 import { H_POINT } from './constants';
 
 const H_POINT_XONLY_HEX = H_POINT.slice(1).toString('hex');
@@ -33,6 +33,6 @@ function reduceLeaves(array: string[]): string {
   }
 }
 
-function toASMstring(f: Function): string {
+function toASMstring(f: ArtifactFunction): string {
   return `asm(${f.asm.join(' ')})`;
 }

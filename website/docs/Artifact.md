@@ -64,7 +64,7 @@ Each **Artifact** JSON file contains the following information:
 - `constructorInputs` it's a list of values to parametrize the final script. Each input must have a `type` and a `name` to allow the `asm` list of opcodes to make use of [template](#template-strings) strings to replace them with actual inputs and to allow libraries and SDKs to do type checking and sanitizations.
 - `functions` it's a list of all possible [Taproot script path spend](https://bitcoin.stackexchange.com/a/111100)s that can be used to *unlock* the coins held by the contract on the blockchain. 
 
-Each **Function** contains the following information:
+Each **ArtifactFunction** contains the following information:
 
 - `name` it's a label to reference the function.
 - `functionInputs` it's a list of values that must be passed on the witness stack to satisfy the execution of the script. Each input must have a `type` and a `name` to allow the `asm` list of opcodes to make use of [$template](#template-strings) strings to replace them with inputs and to allow libraries and SDKs to do type checking and sanitizations.
@@ -251,7 +251,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
 interface Artifact {
   contractName: string;
   constructorInputs: Parameter[];
-  functions: Function[];
+  functions: ArtifactFunction[];
 }
 
 interface Parameter {
@@ -259,7 +259,7 @@ interface Parameter {
   type: PrimitiveType;
 }
 
-interface Function {
+interface ArtifactFunction {
   name: string;
   functionInputs: Parameter[];
   require: Requirement[];

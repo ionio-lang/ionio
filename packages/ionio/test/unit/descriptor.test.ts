@@ -18,7 +18,7 @@ const tests = [
     name: 'transferWithKey',
     fixture: 'transfer_with_key.json',
     expected:
-      'eltr(50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0, { asm($pubKey OP_CHECKSIG) })',
+      'eltr(50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0, { asm($pubKey OP_CHECKSIG), asm(OP_TRUE)})',
   },
 ];
 

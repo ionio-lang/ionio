@@ -1,6 +1,6 @@
-import { Transaction, Utxo } from './Transaction';
+import { Transaction } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
-import { Artifact, Function } from './Artifact';
+import { Artifact, ArtifactFunction } from './Artifact';
 import {
   address,
   script,
@@ -13,11 +13,12 @@ import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
 import { checkRequirements } from './Requirement';
+import { Output, UnblindedOutput } from 'ldk';
 
 export interface ContractInterface {
   name: string;
   address: string;
-  fundingUtxo: Utxo | undefined;
+  fundingUtxo: Output | UnblindedOutput | undefined;
   bytesize: number;
   functions: {
     [name: string]: ContractFunction;
@@ -31,7 +32,7 @@ export interface ContractInterface {
 export class Contract implements ContractInterface {
   name: string;
   address: string;
-  fundingUtxo: Utxo | undefined;
+  fundingUtxo: Output | UnblindedOutput | undefined;
   // TODO add bytesize calculation
   bytesize: number = 0;
 
@@ -134,7 +135,7 @@ export class Contract implements ContractInterface {
   }
 
   private createFunction(
-    artifactFunction: Function,
+    artifactFunction: ArtifactFunction,
     selector: number
   ): ContractFunction {
     return (...functionArgs: Argument[]) => {
@@ -144,10 +145,11 @@ export class Contract implements ContractInterface {
         );
       }
 
-      // Encode passed args (this also performs type checking)
+      // Encode passed args: this performs type checking
       functionArgs.forEach((arg, index) => {
         if (isSigner(arg)) return;
-        return encodeArgument(arg, artifactFunction.functionInputs[index].type);
+        encodeArgument(arg, artifactFunction.functionInputs[index].type);
+        return;
       });
 
       // check requirements
@@ -164,7 +166,8 @@ export class Contract implements ContractInterface {
           leaves: this.leaves,
           parity: this.parity,
         },
-        this.network
+        this.network,
+        this.ecclib
       );
     };
   }
