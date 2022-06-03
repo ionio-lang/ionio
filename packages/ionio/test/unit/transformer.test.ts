@@ -1,71 +1,46 @@
+import { AssetHash } from 'ldk';
 import {
-  Artifact,
-  ArtifactMapper,
-  withConstructorInput,
-  withCustomConstructorInputName,
+  transformArtifact,
+  TemplateString,
+  encodeArgument,
+  PrimitiveType,
 } from '../../src';
 
-interface Test {
-  name: string;
-  artifact: Artifact;
-  mapper: ArtifactMapper;
-  expected: Artifact;
-}
-
 const transferWithKey = require('../fixtures/transfer_with_key.json');
-
-const tests: Test[] = [
-  {
-    name: 'withConstructorInput',
-    artifact: transferWithKey,
-    mapper: withConstructorInput(
-      'pubKey',
-      Buffer.from(
-        'c6d0c728b8e8fd24cf1a6022578f73820ba22e44fbc6de3a4b1a8b7f397fdbd1',
-        'hex'
-      )
-    ),
-    expected: {
-      ...transferWithKey,
-      constructorInputs: [],
-      functions: [
-        {
-          ...transferWithKey.functions[0],
-          asm: [
-            'c6d0c728b8e8fd24cf1a6022578f73820ba22e44fbc6de3a4b1a8b7f397fdbd1',
-            'OP_CHECKSIG',
-          ],
-        },
-      ],
-    },
-  },
-  {
-    name: 'withCustomConstructorInputName',
-    artifact: transferWithKey,
-    mapper: withCustomConstructorInputName('pubKey', 'pubkeycustomname'),
-    expected: {
-      ...transferWithKey,
-      constructorInputs: [
-        {
-          ...transferWithKey.constructorInputs[0],
-          name: 'pubkeycustomname',
-        },
-      ],
-      functions: [
-        {
-          ...transferWithKey.functions[0],
-          asm: ['$pubkeycustomname', 'OP_CHECKSIG'],
-        },
-      ],
-    },
-  },
-];
+const synth = require('../fixtures/synthetic_asset.json');
 
 describe('transformArtifact', () => {
-  for (const t of tests) {
-    it(`should transform artifact with ${t.name}`, () => {
-      const transformed = t.mapper(t.artifact);
-      expect(transformed).toEqual(t.expected);
-    });
-  }
+  it('should rename constructor input name and asm tokens if TemplateString()', () => {
+    const artifact = transformArtifact(transferWithKey, [
+      TemplateString('customName'),
+    ]);
+    expect(artifact.constructorInputs[0].name).toBe('customName');
+    expect(artifact.functions[0].asm).toEqual(['$customName', 'OP_CHECKSIG']);
+  });
+
+  it('should encode constructor input and asm tokens if Argument', () => {
+    const artifact = transformArtifact(synth, [
+      AssetHash.fromHex(
+        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
+        false
+      ).hex,
+      AssetHash.fromHex(
+        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
+        false
+      ).hex,
+    ]);
+
+    expect(artifact.constructorInputs[0].name).toBe(
+      synth.constructorInputs[2].name
+    );
+    expect(artifact.functions[0].asm[4]).toEqual(
+      encodeArgument(
+        AssetHash.fromHex(
+          '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
+          false
+        ).hex,
+        PrimitiveType.Asset
+      ).toString('hex')
+    );
+  });
 });

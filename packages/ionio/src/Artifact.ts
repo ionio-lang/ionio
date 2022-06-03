@@ -20,59 +20,6 @@ interface Function {
   asm: string[];
 }
 
-type ArtifactMapper = (artifact: Artifact) => Artifact;
-
-/**
- * compile one of the constructor input
- * @param name name of the input to compile
- * @param arg argument value as input
- */
-function withConstructorInput(name: string, arg: Argument): ArtifactMapper {
-  return (artifact: Artifact): Artifact => {
-    // compile the constructor input
-    const constructorInputToRemove = artifact.constructorInputs.find(
-      p => p.name === name
-    );
-    if (!constructorInputToRemove) {
-      throw new Error(`Constructor input ${name} not found`);
-    }
-    const argEncoded = encodeArgument(arg, constructorInputToRemove.type);
-
-    return {
-      ...artifact,
-      // remove compiled constructor input
-      constructorInputs: artifact.constructorInputs.filter(
-        p => p.name !== name
-      ),
-      functions: artifact.functions.map(
-        replaceASMtoken(name, argEncoded.toString('hex'))
-      ),
-    };
-  };
-}
-
-/**
- * change the name of one of the constructor input
- * @param toreplace name of the input name to replace
- * @param replaceby new name of the input
- */
-function withCustomConstructorInputName(
-  toreplace: string,
-  replaceby: string
-): ArtifactMapper {
-  return (artifact: Artifact): Artifact => {
-    return {
-      ...artifact,
-      constructorInputs: artifact.constructorInputs.map(p =>
-        p.name === toreplace ? { ...p, name: replaceby } : p
-      ),
-      functions: artifact.functions.map(
-        replaceASMtoken(toreplace, `$${replaceby}`)
-      ),
-    };
-  };
-}
-
 function replaceASMtoken(
   toreplace: string,
   by: string
@@ -80,7 +27,7 @@ function replaceASMtoken(
   return (f: Function): Function => ({
     ...f,
     asm: f.asm.map(token => {
-      if (token.slice(1) === toreplace) {
+      if (token === toreplace) {
         return by;
       }
       return token;
@@ -88,19 +35,83 @@ function replaceASMtoken(
   });
 }
 
-function composeMappers(...mappers: ArtifactMapper[]): ArtifactMapper {
-  return (artifact: Artifact): Artifact => {
-    return mappers.reduce((acc, mapper) => mapper(acc), artifact);
+function renameConstructorInput(
+  artifact: Artifact,
+  inputIndex: number,
+  newName: string
+): Artifact {
+  const constructorInputToRename = artifact.constructorInputs[inputIndex];
+  if (!constructorInputToRename) {
+    throw new Error(`Constructor input #${inputIndex} not found`);
+  }
+  return {
+    ...artifact,
+    constructorInputs: artifact.constructorInputs.map(p =>
+      p.name === constructorInputToRename.name ? { ...p, name: newName } : p
+    ),
+    functions: artifact.functions.map(
+      replaceASMtoken('$' + constructorInputToRename.name, '$' + newName)
+    ),
   };
 }
-/**
- * Apply a set of mappers to an artifact
- */
+
+function encodeConstructorArg(
+  artifact: Artifact,
+  inputName: string,
+  arg: Argument
+): Artifact {
+  // compile the constructor input
+  const constructorInputToRemove = artifact.constructorInputs.find(
+    i => i.name === inputName
+  );
+  if (!constructorInputToRemove) {
+    throw new Error(`Constructor input ${inputName} not found`);
+  }
+  const argEncoded = encodeArgument(arg, constructorInputToRemove.type);
+
+  return {
+    ...artifact,
+    // remove compiled constructor input
+    constructorInputs: artifact.constructorInputs.filter(
+      p => p.name !== constructorInputToRemove.name
+    ),
+    functions: artifact.functions.map(
+      replaceASMtoken(
+        '$' + constructorInputToRemove.name,
+        argEncoded.toString('hex')
+      )
+    ),
+  };
+}
+
+interface TemplateStringI {
+  newName: string;
+}
+
+function isTemplateStringI(arg: any): arg is TemplateStringI {
+  return arg.newName !== undefined;
+}
+
+function TemplateString(newName: string): TemplateStringI {
+  return { newName };
+}
+
 function transformArtifact(
   artifact: Artifact,
-  ...mappers: ArtifactMapper[]
+  args: (Argument | TemplateStringI)[]
 ): Artifact {
-  return composeMappers(...mappers)(artifact);
+  let newArtifact = { ...artifact };
+  artifact.constructorInputs.forEach((input, i) => {
+    const arg = args[i];
+    if (arg) {
+      if (isTemplateStringI(arg)) {
+        newArtifact = renameConstructorInput(newArtifact, i, arg.newName);
+      } else {
+        newArtifact = encodeConstructorArg(newArtifact, input.name, arg);
+      }
+    }
+  });
+  return newArtifact;
 }
 
 function importArtifact(artifactFile: string): Artifact {
@@ -117,10 +128,8 @@ export {
   Function,
   Requirement,
   Parameter,
-  ArtifactMapper,
   exportArtifact,
   importArtifact,
   transformArtifact,
-  withConstructorInput,
-  withCustomConstructorInputName,
+  TemplateString,
 };
