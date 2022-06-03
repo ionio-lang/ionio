@@ -1,4 +1,4 @@
-import { script } from 'liquidjs-lib';
+import { script } from 'ldk';
 import { isSigner, Signer } from './Signer';
 import { Value } from './utils/value';
 
