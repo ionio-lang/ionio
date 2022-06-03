@@ -89,7 +89,8 @@ interface TemplateStringI {
 }
 
 function isTemplateStringI(arg: any): arg is TemplateStringI {
-  return arg.newName !== undefined;
+  return Object.keys(arg).includes('newName');
+
 }
 
 function TemplateString(newName: string): TemplateStringI {
