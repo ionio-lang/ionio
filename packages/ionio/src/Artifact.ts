@@ -20,94 +20,48 @@ interface ArtifactFunction {
   asm: string[];
 }
 
-function replaceASMtoken(
-  toreplace: string,
-  by: string
-): (f: ArtifactFunction) => ArtifactFunction {
-  return (f: ArtifactFunction): ArtifactFunction => ({
-    ...f,
-    asm: f.asm.map(token => {
-      if (token === toreplace) {
-        return by;
-      }
-      return token;
-    }),
-  });
-}
 
-function renameConstructorInput(
-  artifact: Artifact,
-  inputIndex: number,
-  newName: string
-): Artifact {
-  const constructorInputToRename = artifact.constructorInputs[inputIndex];
-  if (!constructorInputToRename) {
-    throw new Error(`Constructor input #${inputIndex} not found`);
-  }
-  return {
-    ...artifact,
-    constructorInputs: artifact.constructorInputs.map(p =>
-      p.name === constructorInputToRename.name ? { ...p, name: newName } : p
-    ),
-    functions: artifact.functions.map(
-      replaceASMtoken('$' + constructorInputToRename.name, '$' + newName)
-    ),
-  };
-}
-
-function encodeConstructorArg(
-  artifact: Artifact,
-  inputName: string,
-  arg: Argument
-): Artifact {
-  // compile the constructor input
-  const constructorInputToRemove = artifact.constructorInputs.find(
-    i => i.name === inputName
-  );
-  if (!constructorInputToRemove) {
-    throw new Error(`Constructor input ${inputName} not found`);
-  }
-  const argEncoded = encodeArgument(arg, constructorInputToRemove.type);
-
-  return {
-    ...artifact,
-    // remove compiled constructor input
-    constructorInputs: artifact.constructorInputs.filter(
-      p => p.name !== constructorInputToRemove.name
-    ),
-    functions: artifact.functions.map(
-      replaceASMtoken(
-        '$' + constructorInputToRemove.name,
-        argEncoded.toString('hex')
-      )
-    ),
-  };
-}
-
-interface TemplateStringI {
+interface TemplateString {
   newName: string;
 }
 
-function isTemplateStringI(arg: any): arg is TemplateStringI {
+function isTemplateString(arg: any): arg is TemplateString {
   return Object.keys(arg).includes('newName');
 }
 
-function TemplateString(newName: string): TemplateStringI {
+function templateString(newName: string): TemplateString {
   return { newName };
 }
 
-function transformArtifact(
+function replaceArtifactConstructorWithArguments(
   artifact: Artifact,
-  args: (Argument | TemplateStringI)[]
+  args: (Argument | TemplateString)[]
 ): Artifact {
-  let newArtifact = { ...artifact };
+  validateArtifact(artifact, args);
+  // let's cleanup the constructor inputs to be replace 
+  let newArtifact: Artifact = { ...artifact, constructorInputs: [] };
   artifact.constructorInputs.forEach((input, i) => {
     const arg = args[i];
     if (arg) {
-      if (isTemplateStringI(arg)) {
-        newArtifact = renameConstructorInput(newArtifact, i, arg.newName);
+      if (isTemplateString(arg)) {
+        newArtifact.constructorInputs.push({ name: arg.newName, type: input.type });
+        newArtifact.functions.forEach(f => {
+          f.asm = f.asm.map(token => {
+            if (token === '$' + input.name) {
+              return '$' + arg.newName;
+            }
+            return token;
+          });
+        })
       } else {
-        newArtifact = encodeConstructorArg(newArtifact, input.name, arg);
+        newArtifact.functions.forEach(f => {
+          f.asm = f.asm.map(token => {
+            if (token === '$' + input.name) {
+              return encodeArgument(arg, input.type).toString('hex');
+            }
+            return token;
+          });
+        })
       }
     }
   });
@@ -123,13 +77,39 @@ function exportArtifact(artifact: Artifact, targetFile: string): void {
   fs.writeFileSync(targetFile, jsonString);
 }
 
+function validateArtifact(artifact: Artifact, constructorArgs: (Argument | TemplateString)[]): void {
+  const expectedProperties = [
+    'contractName',
+    'functions',
+    'constructorInputs',
+  ];
+  if (!expectedProperties.every(property => property in artifact)) {
+    throw new Error('Invalid or incomplete artifact provided');
+  }
+
+  if (artifact.constructorInputs.length !== constructorArgs.length) {
+    throw new Error(
+      `Incorrect number of arguments passed to ${artifact.contractName} constructor`
+    );
+  }
+
+  // Encode arguments 
+  constructorArgs.forEach((arg, i) => {
+    if (isTemplateString(arg)) return;
+    // this performs type checking
+    encodeArgument(arg, artifact.constructorInputs[i].type)
+  });
+}
+
 export {
   Artifact,
   ArtifactFunction,
+  TemplateString,
   Requirement,
   Parameter,
   exportArtifact,
   importArtifact,
-  transformArtifact,
-  TemplateString,
+  validateArtifact,
+  templateString,
+  replaceArtifactConstructorWithArguments,
 };
