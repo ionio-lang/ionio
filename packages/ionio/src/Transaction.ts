@@ -195,6 +195,20 @@ export class Transaction implements TransactionInterface {
       }
     }
 
+    // check for blinding to be made
+    if (this.inputBlindingData.size > 0) {
+      if (this.outputBlindingPubKeys.size === 0)
+        throw new Error(
+          'if one confidential input is spent, at least one of the outputs must be blinded'
+        );
+
+      await this.psbt.blindOutputsByIndex(
+        Psbt.ECCKeysGenerator(this.ecclib),
+        this.inputBlindingData,
+        this.outputBlindingPubKeys
+      );
+    }
+
     const encodedArgs = this.functionArgs
       .filter(arg => !isSigner(arg))
       .map((arg, index) => {
@@ -221,20 +235,6 @@ export class Transaction implements TransactionInterface {
       } else if (tapKeySig) {
         witnessStack = [tapKeySig, ...witnessStack];
       }
-    }
-
-    // check for blinding to be made
-    if (this.inputBlindingData.size > 0) {
-      if (this.outputBlindingPubKeys.size === 0)
-        throw new Error(
-          'if one confidential input is spent, at least one of the outputs must be blinded'
-        );
-
-      await this.psbt.blindOutputsByIndex(
-        Psbt.ECCKeysGenerator(this.ecclib),
-        this.inputBlindingData,
-        this.outputBlindingPubKeys
-      );
     }
 
     this.psbt.finalizeInput(this.fundingUtxoIndex!, (_, input) => {
