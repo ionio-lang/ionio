@@ -59,7 +59,6 @@ describe('CheckSigFromStack', () => {
 
       const hex = tx.psbt.extractTransaction().toHex();
       const txid = await broadcast(hex);
-      console.log(txid);
       expect(txid).toBeDefined();
     });
   });

@@ -20,7 +20,6 @@ interface ArtifactFunction {
   asm: string[];
 }
 
-
 interface TemplateString {
   newName: string;
 }
@@ -38,13 +37,16 @@ function replaceArtifactConstructorWithArguments(
   args: (Argument | TemplateString)[]
 ): Artifact {
   validateArtifact(artifact, args);
-  // let's cleanup the constructor inputs to be replace 
+  // let's cleanup the constructor inputs to be replace
   let newArtifact: Artifact = { ...artifact, constructorInputs: [] };
   artifact.constructorInputs.forEach((input, i) => {
     const arg = args[i];
     if (arg) {
       if (isTemplateString(arg)) {
-        newArtifact.constructorInputs.push({ name: arg.newName, type: input.type });
+        newArtifact.constructorInputs.push({
+          name: arg.newName,
+          type: input.type,
+        });
         newArtifact.functions.forEach(f => {
           f.asm = f.asm.map(token => {
             if (token === '$' + input.name) {
@@ -52,7 +54,7 @@ function replaceArtifactConstructorWithArguments(
             }
             return token;
           });
-        })
+        });
       } else {
         newArtifact.functions.forEach(f => {
           f.asm = f.asm.map(token => {
@@ -61,7 +63,7 @@ function replaceArtifactConstructorWithArguments(
             }
             return token;
           });
-        })
+        });
       }
     }
   });
@@ -77,12 +79,11 @@ function exportArtifact(artifact: Artifact, targetFile: string): void {
   fs.writeFileSync(targetFile, jsonString);
 }
 
-function validateArtifact(artifact: Artifact, constructorArgs: (Argument | TemplateString)[]): void {
-  const expectedProperties = [
-    'contractName',
-    'functions',
-    'constructorInputs',
-  ];
+function validateArtifact(
+  artifact: Artifact,
+  constructorArgs: (Argument | TemplateString)[]
+): void {
+  const expectedProperties = ['contractName', 'functions', 'constructorInputs'];
   if (!expectedProperties.every(property => property in artifact)) {
     throw new Error('Invalid or incomplete artifact provided');
   }
@@ -93,11 +94,11 @@ function validateArtifact(artifact: Artifact, constructorArgs: (Argument | Templ
     );
   }
 
-  // Encode arguments 
+  // Encode arguments
   constructorArgs.forEach((arg, i) => {
     if (isTemplateString(arg)) return;
     // this performs type checking
-    encodeArgument(arg, artifact.constructorInputs[i].type)
+    encodeArgument(arg, artifact.constructorInputs[i].type);
   });
 }
 
