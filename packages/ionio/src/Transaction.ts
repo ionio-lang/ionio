@@ -230,7 +230,7 @@ export class Transaction implements TransactionInterface {
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
 
-      this.psbt.blindOutputsByIndex(
+      await this.psbt.blindOutputsByIndex(
         Psbt.ECCKeysGenerator(this.ecclib),
         this.inputBlindingData,
         this.outputBlindingPubKeys
