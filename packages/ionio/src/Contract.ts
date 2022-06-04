@@ -1,6 +1,6 @@
 import { Transaction } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
-import { Artifact, ArtifactFunction } from './Artifact';
+import { Artifact, ArtifactFunction, validateArtifact } from './Artifact';
 import {
   address,
   script,
@@ -50,25 +50,7 @@ export class Contract implements ContractInterface {
     private network: Network,
     private ecclib: bip341.TinySecp256k1Interface
   ) {
-    const expectedProperties = [
-      'contractName',
-      'functions',
-      'constructorInputs',
-    ];
-    if (!expectedProperties.every(property => property in artifact)) {
-      throw new Error('Invalid or incomplete artifact provided');
-    }
-
-    if (artifact.constructorInputs.length !== constructorArgs.length) {
-      throw new Error(
-        `Incorrect number of arguments passed to ${artifact.contractName} constructor`
-      );
-    }
-
-    // Encode arguments (this performs type checking)
-    constructorArgs.forEach((arg, i) =>
-      encodeArgument(arg, artifact.constructorInputs[i].type)
-    );
+    validateArtifact(artifact, constructorArgs);
 
     this.leaves = [];
     this.functions = {};
