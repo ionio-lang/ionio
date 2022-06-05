@@ -193,7 +193,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
           "expected": "$delay"
         },
         {
-          "type": "outputscript",
+          "type": "output",
           "atIndex": 0,
           "expected": {
             "script" : {
@@ -201,7 +201,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
               "program": "$hotScriptProgram"
             },
             "value": "$amount",
-            "asset": "$assetID",
+            "asset": "$assetHash",
             "nonce": ""
           }
         }
