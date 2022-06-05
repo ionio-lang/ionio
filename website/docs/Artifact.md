@@ -25,7 +25,7 @@ Artifacts allow any third-party SDKs to be developed, since these SDKs only need
     {
       "name": "pubKey",
       "type": "xonlypubkey"
-    },
+    }
   ],
   "functions": [
     {
@@ -39,9 +39,8 @@ Artifacts allow any third-party SDKs to be developed, since these SDKs only need
       "require": [
         {
           "type": "older",
-          "expected": "$delay",
+          "expected": "$delay"
         }
-      ],
       ],
       "asm": [
         "$delay",
@@ -130,7 +129,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
       "type": "value"
     },
     {
-      "name": "assetID",
+      "name": "assetHash",
       "type": "asset"
     },
     {
@@ -182,7 +181,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
         "OP_0",
         "OP_INSPECTOUTPUTNONCE",
         "OP_0",
-        "OP_EQUALVERIFY",
+        "OP_EQUAL"
       ]
     },
     {
@@ -236,7 +235,7 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
         "OP_0",
         "OP_INSPECTOUTPUTNONCE",
         "OP_0",
-        "OP_EQUALVERIFY",
+        "OP_EQUAL"
       ]
     }
   ]

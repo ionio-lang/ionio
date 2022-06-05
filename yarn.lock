@@ -4743,7 +4743,6 @@ lines-and-columns@^1.1.6:
 
 liquidjs-lib@^6.0.2-liquid.7, "liquidjs-lib@git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support":
   version "6.0.2-liquid.8"
-  uid "680f5d94d27aa85935fe4a3caa444bf217e3739b"
   resolved "git+https://github.com/louisinger/liquidjs-lib.git#680f5d94d27aa85935fe4a3caa444bf217e3739b"
   dependencies:
     "@types/randombytes" "^2.0.0"

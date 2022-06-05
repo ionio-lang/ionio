@@ -1,0 +1,45 @@
+{
+  "contractName": "TransferWithTimelock",
+  "constructorInputs": [
+    {
+      "name": "delay",
+      "type": "number"
+    },
+    {
+      "name": "pubKey",
+      "type": "xonlypubkey"
+    }
+  ],
+  "functions": [
+    {
+      "name": "transfer",
+      "functionInputs": [
+        {
+          "name": "ownerSignature",
+          "type": "sig"
+        }
+      ],
+      "require": [
+        {
+          "type": "older",
+          "expected": "$delay"
+        }
+      ],
+      "asm": [
+        "$delay",
+        "OP_CHECKSEQUENCEVERIFY",
+        "OP_DROP",
+        "$pubKey",
+        "OP_CHECKSIG"
+      ]
+    },
+    {
+      "name": "fake",
+      "functionInputs": [],
+      "require": [],
+      "asm": [
+        "OP_FALSE"
+      ]
+    }
+  ]
+}
