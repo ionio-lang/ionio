@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
-import { network } from '../fixtures/vars';
-import { address, TxOutput } from 'ldk';
+import { alicePk, network } from '../fixtures/vars';
+import { address, payments, TxOutput } from 'ldk';
 import { broadcast, faucetComplex } from '../utils';
 import { Artifact } from '../../src/Artifact';
 
@@ -19,12 +19,15 @@ describe('SingleHopVault', () => {
   const sats = 100000;
   const fee = 100;
 
-  beforeAll(async () => {
+  const someoneElse = payments.p2wpkh({ pubkey: alicePk.publicKey, network })
+    .address!;
+
+  beforeEach(async () => {
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/single_hop_vault.json');
     contract = new Contract(
       artifact,
-      [coldScriptProgram, hotScriptProgram, sats - fee, network.assetHash, 5],
+      [coldScriptProgram, hotScriptProgram, sats - fee, network.assetHash, 2],
       network,
       ecc
     );
@@ -48,7 +51,44 @@ describe('SingleHopVault', () => {
 
       const signedTx = await tx.unlock();
       const hex = signedTx.psbt.extractTransaction().toHex();
-      expect(async () => await broadcast(hex)).toBeDefined();
+      await expect(broadcast(hex, false)).rejects.toThrow();
+    });
+
+    it('should not transfer to someone else', async () => {
+      const amount = sats - fee;
+
+      // lets instantiare the contract using the funding transacton
+      const instance = contract.from(utxo.txid, utxo.vout, prevout);
+
+      // we just faucet to mint a block
+      await faucetComplex(someoneElse, sats / 10 ** 8);
+
+      const tx = instance.functions
+        .delayedHotSpend()
+        .withRecipient(someoneElse, amount, network.assetHash)
+        .withFeeOutput(fee);
+
+      await expect(tx.unlock()).rejects.toThrow();
+    });
+
+    it('should transfer to hot wallet after a block', async () => {
+      const amount = sats - fee;
+
+      // lets instantiare the contract using the funding transacton
+      const instance = contract.from(utxo.txid, utxo.vout, prevout);
+
+      // we just faucet to mint a block
+      await faucetComplex(someoneElse, sats / 10 ** 8);
+
+      const tx = instance.functions
+        .delayedHotSpend()
+        .withRecipient(hotAddr, amount, network.assetHash)
+        .withFeeOutput(fee);
+
+      const signedTx = await tx.unlock();
+      const hex = signedTx.psbt.extractTransaction().toHex();
+      const txid = await broadcast(hex);
+      expect(txid).toBeDefined();
     });
   });
 });
