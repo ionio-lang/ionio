@@ -13,7 +13,8 @@ import { ArtifactFunction, Parameter } from './Artifact';
 import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
 import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
-import { RequiredOutput } from './Requirement';
+import { RequiredOutput, RequirementType, ScriptPubKey } from './Requirement';
+import { replaceTemplateWithConstructorArg } from './utils/template';
 import {
   isUnblindedOutput,
   Output,
@@ -80,9 +81,41 @@ export class Transaction implements TransactionInterface {
         ...path,
       ]);
 
+      let sequence;
+      this.artifactFunction.require.forEach(requirement => {
+        if (requirement.type === RequirementType.After) {
+          const valueBuffer = Buffer.from(
+            replaceTemplateWithConstructorArg(
+              requirement.expected as string,
+              this.constructorInputs,
+              this.constructorArgs
+            ),
+            'hex'
+          );
+          this.psbt.setLocktime(script.number.decode(valueBuffer));
+          // Note: nSequence MUST be <= 0xfffffffe otherwise LockTime is ignored, and is immediately spendable.
+          sequence = 0xfffffffe;
+          return;
+        }
+
+        if (requirement.type === RequirementType.Older) {
+          const valueBuffer = Buffer.from(
+            replaceTemplateWithConstructorArg(
+              requirement.expected as string,
+              this.constructorInputs,
+              this.constructorArgs
+            ),
+            'hex'
+          );
+          sequence = script.number.decode(valueBuffer);
+          return;
+        }
+      });
+
       this.psbt.addInput({
         hash: this.fundingUtxo.txid,
         index: this.fundingUtxo.vout,
+        sequence,
         witnessUtxo: this.fundingUtxo.prevout,
         tapLeafScript: [
           {
@@ -164,30 +197,70 @@ export class Transaction implements TransactionInterface {
     let witnessStack: Buffer[] = [];
 
     for (const { type, atIndex, expected } of this.artifactFunction.require) {
+      const checkInputAtIndex = () => {
+        if (atIndex! >= this.psbt.data.inputs.length)
+          throw new Error(`${type} is required at index ${atIndex}`);
+      };
+      const checkOutputAtIndex = () => {
+        if (atIndex! >= this.psbt.data.outputs.length)
+          throw new Error(`${type} is required at index ${atIndex}`);
+      };
+      const introspect = new Introspect(
+        atIndex!,
+        type,
+        this.constructorInputs,
+        this.constructorArgs
+      );
       // do the checks
       switch (type) {
         case 'input':
-          if (atIndex! >= this.psbt.data.inputs.length)
-            throw new Error(`${type} is required at index ${atIndex}`);
+          checkInputAtIndex();
           break;
-        case 'output':
-          if (atIndex! >= this.psbt.data.outputs.length)
-            throw new Error(`${type} is required at index ${atIndex}`);
+
+        case 'outputscript': {
+          checkOutputAtIndex();
+          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const script = expected as ScriptPubKey;
+          introspect.checkOutputScript(script, outputAtIndex.script);
+          break;
+        }
+
+        case 'outputvalue': {
+          checkOutputAtIndex();
+          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const value = expected as string;
+          introspect.checkOutputValue(value, outputAtIndex.value);
+          break;
+        }
+
+        case 'outputasset': {
+          checkOutputAtIndex();
+          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const asset = expected as string;
+          introspect.checkOutputValue(asset, outputAtIndex.asset);
+          break;
+        }
+
+        case 'outputnonce': {
+          checkOutputAtIndex();
+          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const nonce = expected as string;
+          introspect.checkOutputNonce(nonce, outputAtIndex.nonce);
+          break;
+        }
+
+        case 'output': {
+          checkOutputAtIndex();
 
           const outputAtIndex = this.psbt.TX.outs[atIndex!];
           const { script, value, nonce, asset } = expected as RequiredOutput;
 
-          const introspect = new Introspect(
-            atIndex!,
-            type,
-            this.constructorInputs,
-            this.constructorArgs
-          );
           introspect.checkOutputValue(value, outputAtIndex.value);
           introspect.checkOutputScript(script, outputAtIndex.script);
           introspect.checkOutputAsset(asset, outputAtIndex.asset);
           introspect.checkOutputNonce(nonce, outputAtIndex.nonce);
           break;
+        }
         case 'after':
         case 'older':
         default:
