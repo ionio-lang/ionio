@@ -50,6 +50,7 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
+          { to: 'blog', label: 'Blog', position: 'left'}, // or position: 'right'
           {
             href: 'https://github.com/ionio-lang/ionio',
             label: 'GitHub',
