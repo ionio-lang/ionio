@@ -13,7 +13,7 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build --format cjs,esm,umd --name ionio",
-    "test": "tsdx test --runInBand",
+    "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build --format cjs,esm,umd --name ionio",
     "size": "size-limit",
