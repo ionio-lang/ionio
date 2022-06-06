@@ -1,4 +1,9 @@
 
+<div align="center">
+	<img width="256" src="./website/static/logo.png">
+</div>
+
+
 # 🌊 Ionio
 
 Ionio is a higher-level language that allows you to write smart contracts for the Elements blockchain. It can compile instructions for Elements’ execution environment, which targets Elements Tapscript and Simplicity.
