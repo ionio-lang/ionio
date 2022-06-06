@@ -4,41 +4,46 @@
   import * as ecc from 'tiny-secp256k1';
   import artifact from './artifacts/calculator.json';
 
-  let contractAddress = '';
+  const network = networks.regtest;
+  let txhex = '';
 
-  const sats = 100000;
-  const contract = new Contract(artifact as Artifact, [3], networks.testnet, ecc);
-  contractAddress = contract.address;
+  const sats = 1000000;
+  const fee = 100;
+
+  const contract = new Contract(artifact as Artifact, [3], network, ecc);
+  const contractAddress = contract.address;
 
   const onClick = async () => {
 
-    const fee = 100;
+    
+    const txid = prompt('Enter a transaction hash', '49158cdfd93bdcf711becefe12d8387c10ec974e4b6c8f62a99a15e324565089');
+    const vout = prompt('Enter the vout', "1");
 
     // attach to the funded contract using the utxo
     const instance = contract.from(
-      "6ffff978d47a564d5f6cdf9684d6482f49c1abd064d2047b50cc3ffcf4841bf5",
-      0,
+      txid,
+      parseInt(vout),
       {
         script: address.toOutputScript(contractAddress),
         value: confidential.satoshiToConfidentialValue(sats),
-        asset: AssetHash.fromHex(networks.testnet.assetHash, false).bytes,
+        asset: AssetHash.fromHex(network.assetHash, false).bytes,
         nonce: Buffer.alloc(0),
       }
     );
 
+    const recipient = prompt('Enter a recipient to send funds to', "ert1qzqpsk9jtgwtyh96se48j9v99klh796wgly0xjk")
     const tx = await instance.functions
-      .sumMustBeThree(5454,2)
+      .sumMustBeThree(1,2)
       .withRecipient(
-        "vjTyPZRBt2WVo8nnFrkQSp4x6xRHt5DVmdtvNaHbMaierD41uz7fk4Jr9V9vgsPHD74WA61Ne67popRQ",
+        recipient,
         sats - fee,
-        networks.testnet.assetHash
+        network.assetHash
       )
       .withFeeOutput(fee)
       .unlock();
 
     // extract and broadcast
-    const txHex = tx.psbt.extractTransaction().toHex();
-    console.log(txHex);
+    txhex = tx.psbt.extractTransaction().toHex();
   };
 </script>
 
@@ -49,4 +54,9 @@
   </p>
   <hr />
   <button class="button is-primary" on:click={onClick}> Sum must be 3 </button>
+  {#if txhex.length > 0} 
+    <hr />
+    <p class="subtitle">Raw transaction</p>
+    <input class="input" value={txhex} />
+  {/if}
 </div>

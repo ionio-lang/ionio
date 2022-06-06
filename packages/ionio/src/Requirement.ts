@@ -1,6 +1,12 @@
 interface Requirement {
   type: RequirementType;
-  expected: RequiredInput | RequiredOutput | number | string | undefined;
+  expected:
+    | RequiredInput
+    | RequiredOutput
+    | ScriptPubKey
+    | number
+    | string
+    | undefined;
   atIndex?: number; // for input* or output* requirements only
 }
 
@@ -46,27 +52,72 @@ interface RequiredOutput {
 
 function checkRequirements(require: Requirement[]) {
   for (const { type, atIndex, expected } of require) {
+    const checkAtIndex = () => {
+      if (atIndex === undefined)
+        throw new Error(
+          `atIndex field is required for requirement of type ${type}`
+        );
+    };
+    const checkExpected = () => {
+      if (!expected)
+        throw new Error(
+          `expected field of type ${type} is required at index ${atIndex}`
+        );
+    };
     switch (type) {
       case 'input':
-        if (atIndex === undefined)
-          throw new Error(
-            `atIndex field is required for requirement of type ${type}`
-          );
-        if (!expected)
-          throw new Error(
-            `expected field of type ${type} is required at index ${atIndex}`
-          );
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'inputscript':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'inputvalue':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'inputasset':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'inputhash':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'inputindex':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'outputscript':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'outputvalue':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'outputasset':
+        checkAtIndex();
+        checkExpected();
+        break;
+
+      case 'outputnonce':
+        checkAtIndex();
+        checkExpected();
         break;
 
       case 'output':
-        if (atIndex === undefined)
-          throw new Error(
-            `atIndex field is required for requirement of type ${type}`
-          );
-        if (!expected)
-          throw new Error(
-            `expected field of type ${type} is required at index ${atIndex}`
-          );
+        checkAtIndex();
+        checkExpected();
         const expectedProperties = ['script', 'value', 'asset', 'nonce'];
         if (
           !expectedProperties.every(
@@ -84,8 +135,11 @@ function checkRequirements(require: Requirement[]) {
           throw new Error('Invalid or incomplete artifact provided');
         }
         break;
+
       case 'after':
       case 'older':
+        checkExpected();
+        break;
       default:
         break;
     }
