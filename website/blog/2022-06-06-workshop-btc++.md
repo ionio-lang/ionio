@@ -129,7 +129,7 @@ Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root
     {contractAddress}
   </p>
   <hr />
-  <button class="button is-primary" on:click={onClick}> Sum must be 3 </button>
+  <button class="button is-primary"> Sum must be 3 </button>
   {#if txhex.length > 0} 
     <hr />
     <p class="subtitle">Raw transaction</p>
@@ -218,6 +218,7 @@ const contractInstance: () => Contract = () => {
 
 ```ts
 const onClick = async () => {
+  const instance = contractInstance();
   const recipient = prompt('Enter a recipient to send funds to');
   
   const tx = await instance.functions
@@ -235,11 +236,25 @@ const onClick = async () => {
 }
 ```
 
+Add the `onClick` to the `on:click` Svelte directive of the button
+```html
+<button class="button is-primary" on:click={onClick}> Sum must be 3 </button>
+```
+
 
 3. 🚀 push the transaction
 
 Run the app and click on the button `Sum must be 3`
 
+It will ask you to enter a transaction hash and vout and an recipient address.
+
+Get a fresh unconfidential address
+
+```sh 
+nigiri rpc --liquid validateaddress `nigiri rpc --liquid getnewaddress` | jq .unconfidential
+```
+
+Broadcast 
 ```sh
 nigiri push --liquid <txhex>
 ```
