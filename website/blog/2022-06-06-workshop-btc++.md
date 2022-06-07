@@ -61,22 +61,9 @@ nigiri start --liquid
 ```sh
 npx degit "tiero/svelte-webpack-bulma" ionio-app
 cd ionio-app
-yarn add @ionio-lang/ionio tiny-secp256k1
+yarn add @ionio-lang/ionio tiny-secp256k1 liquidjs-lib-taproot
 ```
 
-Add this depenedency to your `package.json` inder the `dependecies` key
-
-```json
-{
-  "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
-}
-```
-
-Add the `resolutions`
-
-```
-"liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
-```
 
 > or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
 
