@@ -61,7 +61,7 @@ nigiri start --liquid
 ```sh
 npx degit "tiero/svelte-webpack-bulma" ionio-app
 cd ionio-app
-yarn add @ionio-lang/ionio tiny-secp256k1
+yarn add yarn add @ionio-lang/ionio@0.1.5 tiny-secp256k1
 ```
 
 > or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
