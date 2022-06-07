@@ -61,7 +61,15 @@ nigiri start --liquid
 ```sh
 npx degit "tiero/svelte-webpack-bulma" ionio-app
 cd ionio-app
-yarn add yarn add @ionio-lang/ionio@0.1.5 tiny-secp256k1
+yarn add @ionio-lang/ionio tiny-secp256k1
+```
+
+Add this depenedency to your `package.json` inder the `dependecies` key
+
+```json
+{
+  "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+}
 ```
 
 > or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
@@ -142,20 +150,20 @@ Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root
 
 ```ts
 <script type="ts">
-  import { Contract, Artifact} from '@ionio-lang/ionio';
+  import { Artifact, Contract } from '@ionio-lang/ionio';
   import { networks } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
-
   import artifact from './calculator.json';
 
+  // define the network we going to work
+  const network = networks.regtest;
   // create empty state
   let txhex = '';
   // amounts to use for spending
   const sats = 100000;
   const fee = 100;
 
-  // define the network we going to work
-  const network = networks.regtest;
+ 
 
   // 📚 Let's compile the script 
   const contract = new Contract(
@@ -189,36 +197,26 @@ Track down the `txid` and `vout` of the new unspent output that locks coin in th
 
 ### 💸 Spend
 
-1. Add a `contractInstance` function to attach to existent contract
-
-```ts
-const contractInstance: () => Contract = () => {
-    const txid = prompt('Enter a transaction hash');
-    const vout = prompt('Enter the vout');
-
-    // attach to the funded contract using the utxo
-    const instance = contract.from(
-      txid,
-      parseInt(vout),
-      {
-        script: address.toOutputScript(contractAddress),
-        value: confidential.satoshiToConfidentialValue(sats),
-        asset: AssetHash.fromHex(network.assetHash, false).bytes,
-        nonce: Buffer.alloc(0),
-      }
-    );
-
-    return instance;
-  }
-```
-
-
-2. Add a `onClick` function to be triggered by button
+1. Add a `onClick` function to be triggered by button
 
 
 ```ts
 const onClick = async () => {
-  const instance = contractInstance();
+  const txid = prompt('Enter a transaction hash');
+  const vout = prompt('Enter the vout');
+    
+  // attach to the funded contract using the utxo
+  const instance = contract.from(
+    txid,
+    parseInt(vout),
+    {
+      script: address.toOutputScript(contractAddress),
+      value: confidential.satoshiToConfidentialValue(sats),
+      asset: AssetHash.fromHex(network.assetHash, false).bytes,
+      nonce: Buffer.alloc(0),
+    });
+
+
   const recipient = prompt('Enter a recipient to send funds to');
   
   const tx = await instance.functions
@@ -231,12 +229,12 @@ const onClick = async () => {
       .withFeeOutput(fee)
       .unlock();
 
-    // extract and broadcast
-    txhex = tx.psbt.extractTransaction().toHex();
+  // extract and broadcast
+  txhex = tx.psbt.extractTransaction().toHex();
 }
 ```
 
-Add the `onClick` to the `on:click` Svelte directive of the button
+2. Add the `onClick` to the `on:click` Svelte directive of the button
 ```html
 <button class="button is-primary" on:click={onClick}> Sum must be 3 </button>
 ```
