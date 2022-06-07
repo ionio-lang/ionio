@@ -151,7 +151,7 @@ Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root
   // create empty state
   let txhex = '';
   // amounts to use for spending
-  const sats = 1000000;
+  const sats = 100000;
   const fee = 100;
 
   // define the network we going to work
