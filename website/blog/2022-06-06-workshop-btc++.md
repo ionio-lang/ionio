@@ -24,11 +24,11 @@ In a **post-Simplicty** world, Bitcoin (tap)scripts will have much more capabili
 stadardize all possible combination becomes impossibile, will be the user (or any external app he's visiting most likely) to load at runtime.
 
 
-**Output Descriptors** and **Miniscript** could be a good candidate on how to generalize a way to import script, but i) lack of extensibility ii) need to write a parser/compiler for each language makes it a bit [cumbersome for wallet/libraries to work with](../docs/Artifact.md#alternatives), plus the "policy oriented" nature does not well fit the introspection (ie. covenants) paradigm Simplicity will allow.
+**Output Descriptors** and **Miniscript** could be a good candidate on how to generalize a way to import script, but i) lack of extensibility ii) need to write a parser/compiler for each language makes it a bit [cumbersome for wallet/libraries to work with](/docs/Artifact#alternatives), plus the "policy oriented" nature does not well fit the introspection (ie. covenants) paradigm Simplicity will allow.
 
 The feature to import a script is fundamental for the wallet to **track balances** and to know **how spend** those coins in the future.
 
-The **Ionio Artifact** it's a JSON file that fully describe how a "Pay to Taproot" address is constructed, how the contract behaves and what it should be expected to do spend it in the future. The documentation fot the data structure can be found [here](../docs/Artifact.md#structure)
+The **Ionio Artifact** it's a JSON file that fully describe how a "Pay to Taproot" address is constructed, how the contract behaves and what it should be expected to do spend it in the future. The documentation fot the data structure can be found [here](/docs/Artifact#structure)
 
 # 🧮 You first "calculator"
  
@@ -37,7 +37,7 @@ The **Ionio Artifact** it's a JSON file that fully describe how a "Pay to Taproo
 
 - [Docker Linux](https://docs.docker.com/desktop/linux/install) or [Docker Desktop for Mac](https://docs.docker.com/desktop/mac/install)
 - [Nigiri](https://nigiri.vulpem.com)
-- nodejs/yarn or [replit](htts://replit.com)
+- nodejs/yarn or [replit](https://replit.com)
 
 
 ### Nigiri
@@ -64,7 +64,7 @@ cd ionio-app
 yarn add @ionio-lang/ionio tiny-secp256k1
 ```
 
-> or use [Replit](replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
+> or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
 
 2. Make bundler to import JSONs
 
