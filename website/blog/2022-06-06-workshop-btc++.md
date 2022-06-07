@@ -72,6 +72,12 @@ Add this depenedency to your `package.json` inder the `dependecies` key
 }
 ```
 
+Add the `resolutions`
+
+```
+"liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+```
+
 > or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
 
 2. Make bundler to import JSONs
