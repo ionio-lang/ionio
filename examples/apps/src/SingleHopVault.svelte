@@ -3,6 +3,7 @@
   import { networks, confidential, address, AssetHash, script} from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './artifacts/single_hop_vault.json';
+  import { broadcast } from './somewhere'
 
   const network = networks.regtest;
   let txhex = '';
@@ -18,10 +19,10 @@
   const contract = new Contract(
     artifact as Artifact,
     [
-      coldScriptProgram, 
-      hotScriptProgram, 
-      sats - fee, 
-      network.assetHash, 
+      coldScriptProgram,
+      hotScriptProgram,
+      sats - fee,
+      network.assetHash,
       2,
     ],
     network,
@@ -60,6 +61,7 @@
 
     // extract and broadcast
     txhex = tx.psbt.extractTransaction().toHex();
+    const txid = await broadcast(txhex);
   };
 
   const onHot = async () => {
@@ -71,6 +73,7 @@
 
     // extract and broadcast
     txhex = tx.psbt.extractTransaction().toHex();
+    const txid = await broadcast(txhex);
   };
 </script>
 

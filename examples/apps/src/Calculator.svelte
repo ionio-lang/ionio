@@ -3,6 +3,7 @@
   import { networks, confidential, address, AssetHash } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './artifacts/calculator.json';
+  import { broadcast } from './somewhere'
 
   const network = networks.regtest;
   let txhex = '';
@@ -15,7 +16,7 @@
 
   const onClick = async () => {
 
-    
+
     const txid = prompt('Enter a transaction hash', '49158cdfd93bdcf711becefe12d8387c10ec974e4b6c8f62a99a15e324565089');
     const vout = prompt('Enter the vout', "1");
 
@@ -44,6 +45,7 @@
 
     // extract and broadcast
     txhex = tx.psbt.extractTransaction().toHex();
+    const txid = await broadcast(txhex);
   };
 </script>
 
@@ -54,7 +56,7 @@
   </p>
   <hr />
   <button class="button is-primary" on:click={onClick}> Sum must be 3 </button>
-  {#if txhex.length > 0} 
+  {#if txhex.length > 0}
     <hr />
     <p class="subtitle">Raw transaction</p>
     <input class="input" value={txhex} />
