@@ -61,7 +61,7 @@ Each **Artifact** JSON file contains the following information:
 
 - `contractName` it's a label to reference the compiled contract.
 - `constructorInputs` it's a list of values to parametrize the final script. Each input must have a `type` and a `name` to allow the `asm` list of opcodes to make use of [template](#template-strings) strings to replace them with actual inputs and to allow libraries and SDKs to do type checking and sanitizations.
-- `functions` it's a list of all possible [Taproot script path spend](https://bitcoin.stackexchange.com/a/111100)s that can be used to *unlock* the coins held by the contract on the blockchain. 
+- `functions` it's a list of all possible [Taproot script path spends](https://bitcoin.stackexchange.com/a/111100) that can be used to *unlock* the coins held by the contract on the blockchain.
 
 Each **ArtifactFunction** contains the following information:
 
@@ -78,9 +78,9 @@ Each item in `constructorInputs` and `functionInputs` must have a `type` that de
 - **number** it's an integer used and translates to **CScriptNum** type in Bitcoin Core.
 - **bool** it's a boolean value used and translates to **OP_TRUE** and **OP_FALSE**.
 - **asset** it's a Elements asset hash
-- **value** it's an Elements value 
+- **value** it's an Elements value
 - **bytes** it's a LE64 bytes
-- **xonlypubkey** it's a x-only public key of exactly 32 bytes. 
+- **xonlypubkey** it's a x-only public key of exactly 32 bytes.
 - **pubkey** it's a public key with pre of exactly 33 bytes.
 - **sig** it's a Schnorr signature of exactly 65 bytes.
 - **datasig** it's a signature of exactly 64 bytes.
@@ -88,7 +88,7 @@ Each item in `constructorInputs` and `functionInputs` must have a `type` that de
 
 ## Template strings
 
-In order to parametrize the list of opcodes in a script you can use template strings. These strings are prefixed with `$` and are replaced with the values of the `constructorInputs` and `functionInputs` parameters during the final script compilation to generate the actual blockchain address. 
+In order to parametrize the list of opcodes in a script you can use template strings. These strings are prefixed with `$` and are replaced with the values of the `constructorInputs` and `functionInputs` parameters during the final script compilation to generate the actual blockchain address.
 
 
 ```hack
@@ -104,13 +104,13 @@ There are many reasons why Output Descriptors and Miniscript are not suitable fo
 - Miniscript provides the tools to easily define spending rules using a number of standardized components that can be combined together in predefined ways. The advantage of the Policy Language is at the same time its weakness. It provides great clarity when your spending conditions can be defined using its restricted set of expressions. It is not applicable otherwise, and cannot be used to define custom covenants.
 
 - Output descriptors are *for humans* meaning that to be able to be parsed by softwares and other languages, a custom parser must be developed for each of them. `JSON` on the other hand it's a standard with libraries to parse/serialize present in every programming language.
- 
+
 
 
 
 ## Advanced Example
 
-**Single Hop Vault** 
+**Single Hop Vault**
 
 ```json
 {
