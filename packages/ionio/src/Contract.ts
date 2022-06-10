@@ -42,7 +42,7 @@ export class Contract implements ContractInterface {
 
   leaves: bip341.TaprootLeaf[];
   scriptPubKey: Buffer;
-  private parity: number;
+  parity: number;
 
   constructor(
     private artifact: Artifact,
