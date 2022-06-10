@@ -93,7 +93,7 @@ console.log(contract.bytesize)
 contract.functions.<functionName>(...args: Argument[]): Transaction
 ```
 
-The main way to use smart contracts once they have been instantiated is through the functions defined in the Ionio ~~source code~~ artifact. These functions can be found by their name under `functions` member field of a contract object. To call these functions, the parameters need to match ones defined in the Ionio artifact.
+The main way to use smart contracts once they have been instantiated is through the functions defined in the Ionio ~~source code~~ artifact. These functions can be found by their name under `functions` member field of a contract object. To call these functions, the parameters need to match the ones defined in the Ionio artifact.
 
 These contract functions return an incomplete `Transaction` object, which needs to be completed by providing outputs of the transaction. More information about sending transactions is found on the [*Spending Contracts*](/docs/sdk/transactions) page.
 
@@ -109,8 +109,8 @@ const contract = new Contract(artifact, [3], networks.regtest, ecc);
 
 // attach to the funded contract using the utxo
 const instance = contract.from(
-  fundingUtxo.txid, 
-  fundingUtxo.vout, 
+  fundingUtxo.txid,
+  fundingUtxo.vout,
   fundingUtxo.prevout
 );
 
@@ -118,18 +118,19 @@ const tx = instance.functions
   .sumMustBeThree(1, 2)
   .withRecipient(to, amount, networks.regtest)
   .withRecipient(
-    myself, 
-    utxo.value - amount - feeAmount, 
+    myself,
+    utxo.value - amount - feeAmount,
     network.assetHash
   )
   .withFeeOutput(feeAmount);
 
 
-// Finalize the transaction, checking for all requirements to be satisfied. 
+// Finalize the transaction, checking for all requirements to be satisfied.
 // In this case we do not need a signature to unlock the funds
 // In case of signature needed, unlock accepts an optional parameter of Signer interface
 const signedTx = await tx.unlock();
 
 // extract and broadcast
 const extractedTx = signedTx.psbt.extractTransaction().toHex();
+const txid = await broadcast(extractedTx);
 ```
