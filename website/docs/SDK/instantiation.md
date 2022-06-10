@@ -132,4 +132,5 @@ const signedTx = await tx.unlock();
 
 // extract and broadcast
 const extractedTx = signedTx.psbt.extractTransaction().toHex();
+const txid = await broadcast(extractedTx);
 ```
