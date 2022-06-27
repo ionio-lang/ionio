@@ -40,7 +40,8 @@ describe('CheckSigFromStack', () => {
       const amount = 9900;
       const feeAmount = 100;
 
-      const datasig = '0x22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d';
+      const datasig =
+        '0x22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d';
 
       // lets instantiate the contract using the funding transacton
       const instance = contract.from(utxo.txid, utxo.vout, prevout);

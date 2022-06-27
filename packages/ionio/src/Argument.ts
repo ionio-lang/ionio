@@ -96,7 +96,7 @@ export function encodeArgument(
       if (typeof value === 'string' && value.startsWith('0x')) {
         value = Buffer.from(value.slice(2), 'hex');
       }
-      
+
       if (!Buffer.isBuffer(value)) {
         throw new TypeError(typeof value, typeStr);
       }
