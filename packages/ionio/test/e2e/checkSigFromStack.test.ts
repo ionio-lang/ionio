@@ -15,12 +15,9 @@ describe('CheckSigFromStack', () => {
     contract = new Contract(
       artifact,
       [
-        Buffer.from('68656c6c6f', 'hex'),
-        Buffer.from('f09f8c8e', 'hex'),
-        Buffer.from(
-          '25d1dff95105f5253c4022f628a996ad3a0d95fbf21d468a1b33f8c160d8f517',
-          'hex'
-        ),
+        '0x68656c6c6f',
+        '0xf09f8c8e',
+        '0x25d1dff95105f5253c4022f628a996ad3a0d95fbf21d468a1b33f8c160d8f517',
       ],
       network,
       ecc
@@ -43,10 +40,7 @@ describe('CheckSigFromStack', () => {
       const amount = 9900;
       const feeAmount = 100;
 
-      const datasig = Buffer.from(
-        '22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d',
-        'hex'
-      );
+      const datasig = '0x22b284224b4e1d4a943d5a911a259b00cc737c19e371eff98dd045e385a8e8d4c24137188c07add25ccf0f930f36360e2ecf06b4ffeee3a1bd4e2f37911d7c6d';
 
       // lets instantiate the contract using the funding transacton
       const instance = contract.from(utxo.txid, utxo.vout, prevout);

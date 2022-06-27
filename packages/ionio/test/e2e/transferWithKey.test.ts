@@ -17,7 +17,9 @@ describe('TransferWithKey', () => {
     const artifact: Artifact = require('../fixtures/transfer_with_key.json');
     contract = new Contract(
       artifact,
-      [alicePk.publicKey.slice(1)],
+      [
+        `0x${alicePk.publicKey.slice(1).toString('hex')}`
+      ],
       network,
       ecc
     );
