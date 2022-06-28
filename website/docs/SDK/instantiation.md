@@ -95,13 +95,13 @@ contract.functions.<functionName>(...args: Argument[]): Transaction
 
 The main way to use smart contracts once they have been instantiated is through the functions defined in the Ionio ~~source code~~ artifact. These functions can be found by their name under `functions` member field of a contract object. To call these functions, the parameters need to match the ones defined in the Ionio artifact.
 
-These contract functions return an incomplete `Transaction` object, which needs to be completed by providing outputs of the transaction. More information about sending transactions is found on the [*Spending Contracts*](/docs/sdk/transactions) page.
+These contract functions return an incomplete `Transaction` object, which needs to be completed by providing outputs to the transaction. More information about sending transactions is found on the [*Spending Contracts*](/docs/sdk/transactions) page.
 
 #### Example
 ```ts
 import * as ecc from 'tiny-secp256k1';
 import { Contract, networks } from '@ionio-lang/ionio';
-import { artifact, myself, to, amount, fundingUtxo, prevout } from './somewhere';
+import { artifact, myself, to, amount, fundingUtxo, prevout, broadcast } from './somewhere';
 
 const feeAmount = 100;
 
