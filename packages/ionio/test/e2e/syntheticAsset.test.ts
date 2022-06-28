@@ -12,12 +12,11 @@ import {
   mintComplex,
 } from '../utils';
 
-
 const numberToBytesLE64 = (x: number): Buffer => {
   const buffer = Buffer.alloc(8);
   writeUInt64LE(buffer, x, 0);
   return buffer;
-}
+};
 
 describe('SyntheticAsset', () => {
   const issuer = payments.p2wpkh({ pubkey: alicePk.publicKey, network })!;
@@ -29,14 +28,23 @@ describe('SyntheticAsset', () => {
   let contract: Contract;
   let covenantPrevout: TxOutput;
   let borrowPrevout: TxOutput;
-  let covenantUtxo:  { txid: string; vout: number; value: number; asset: string };
+  let covenantUtxo: {
+    txid: string;
+    vout: number;
+    value: number;
+    asset: string;
+  };
   let borrowUtxo: { txid: string; vout: number; value: number; asset: string };
-  let synthMintUtxo: { txid: string; vout: number; value: number; asset: string };
+  let synthMintUtxo: {
+    txid: string;
+    vout: number;
+    value: number;
+    asset: string;
+  };
   let instance: Contract;
   const borrowAmount = 500000;
   const payoutAmount = 500;
   const feeAmount = 100;
-
 
   // 40k BTCUSD
   const priceLevel = 40000;
@@ -44,8 +52,6 @@ describe('SyntheticAsset', () => {
   //Tue Jun 28 2022 16:31:52 GMT+0200 (Central European Summer Time)
   const timestamp = 1656426712;
   const timestampBytes = numberToBytesLE64(timestamp);
-
-
 
   beforeAll(async () => {
     // mint synthetic asset
@@ -62,7 +68,6 @@ describe('SyntheticAsset', () => {
   });
 
   beforeEach(async () => {
-
     try {
       const artifact = require('../fixtures/synthetic_asset.json');
       contract = new Contract(
@@ -81,7 +86,7 @@ describe('SyntheticAsset', () => {
           issuer.pubkey!.slice(1),
           issuer.output!.slice(2), // segwit program
           priceLevelBytes,
-          timestampBytes
+          timestampBytes,
         ],
         network,
         ecc
@@ -91,16 +96,21 @@ describe('SyntheticAsset', () => {
     }
 
     // 1. send synthetic asset to borrower
-    const faucetSynthResponse = await faucetComplex(borrower.address!, borrowAmount / 10 ** 8, synthMintUtxo.asset);
+    const faucetSynthResponse = await faucetComplex(
+      borrower.address!,
+      borrowAmount / 10 ** 8,
+      synthMintUtxo.asset
+    );
     borrowUtxo = faucetSynthResponse.utxo;
     borrowPrevout = faucetSynthResponse.prevout;
 
-
     // 2. fund our contract with collateral
-    const faucetCollateralResponse = await faucetComplex(contract.address, 0.0001);
+    const faucetCollateralResponse = await faucetComplex(
+      contract.address,
+      0.0001
+    );
     covenantPrevout = faucetCollateralResponse.prevout;
     covenantUtxo = faucetCollateralResponse.utxo;
-
 
     // 3. lets instantiate the contract using the funding transacton
     instance = contract.from(
@@ -111,7 +121,6 @@ describe('SyntheticAsset', () => {
   });
 
   it('should redeem with burnt output', async () => {
-
     const tx = instance.functions
       .redeem(borrowerSigner)
       // spend an asset
@@ -151,15 +160,21 @@ describe('SyntheticAsset', () => {
     const timestampNow = 1656429115;
     const timestampNowBytes = numberToBytesLE64(timestampNow);
 
-    const message = Buffer.from([...timestampNowBytes, ...underwaterPriceBytes]);
-    const hash = crypto.createHash('sha256').update(message).digest();
+    const message = Buffer.from([
+      ...timestampNowBytes,
+      ...underwaterPriceBytes,
+    ]);
+    const hash = crypto
+      .createHash('sha256')
+      .update(message)
+      .digest();
     const oracleDataSig = oraclePk.signSchnorr(hash);
 
     const tx = instance.functions
       .liquidate(
-        underwaterPriceBytes, 
-        timestampNowBytes, 
-        oracleDataSig, 
+        underwaterPriceBytes,
+        timestampNowBytes,
+        oracleDataSig,
         issuerSigner
       )
       // spend an asset

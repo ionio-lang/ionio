@@ -282,15 +282,14 @@ export class Transaction implements TransactionInterface {
       );
     }
 
-
     // check for a signature to be made
-    for (const [index,arg] of this.functionArgs.entries()) {
+    for (const [index, arg] of this.functionArgs.entries()) {
       if (!isSigner(arg)) {
         const encodedArgument = encodeArgument(
           arg,
           this.artifactFunction.functionInputs[index].type
         );
-        witnessStack.push(encodedArgument as Buffer)
+        witnessStack.push(encodedArgument as Buffer);
         continue;
       }
 
@@ -302,7 +301,9 @@ export class Transaction implements TransactionInterface {
         this.fundingUtxoIndex
       ];
       if (tapScriptSig && tapScriptSig.length > 0) {
-        tapScriptSig.forEach(s => witnessStack.push(s.signature));
+        for (const s of tapScriptSig) {
+          witnessStack.push(s.signature);
+        }
       } else if (tapKeySig) {
         // is the key-path spend always first element of stack?
         witnessStack = [tapKeySig, ...witnessStack];
