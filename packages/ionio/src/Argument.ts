@@ -22,9 +22,14 @@ export function encodeArgument(
 ): Buffer | Signer {
   switch (typeStr) {
     case PrimitiveType.Bytes:
+      if (typeof value === 'string' && value.startsWith('0x')) {
+        value = Buffer.from(value.slice(2), 'hex');
+      }
+
       if (!Buffer.isBuffer(value)) {
         throw new TypeError(typeof value, typeStr);
       }
+
       return value;
 
     case PrimitiveType.Number:
@@ -34,6 +39,10 @@ export function encodeArgument(
       return script.number.encode(value);
 
     case PrimitiveType.XOnlyPublicKey:
+      if (typeof value === 'string' && value.startsWith('0x')) {
+        value = Buffer.from(value.slice(2), 'hex');
+      }
+
       if (!Buffer.isBuffer(value)) {
         throw new TypeError(typeof value, typeStr);
       }
@@ -43,6 +52,10 @@ export function encodeArgument(
       return value;
 
     case PrimitiveType.PublicKey:
+      if (typeof value === 'string' && value.startsWith('0x')) {
+        value = Buffer.from(value.slice(2), 'hex');
+      }
+
       if (!Buffer.isBuffer(value)) {
         throw new TypeError(typeof value, typeStr);
       }
@@ -80,6 +93,10 @@ export function encodeArgument(
       return value;
 
     case PrimitiveType.DataSignature:
+      if (typeof value === 'string' && value.startsWith('0x')) {
+        value = Buffer.from(value.slice(2), 'hex');
+      }
+
       if (!Buffer.isBuffer(value)) {
         throw new TypeError(typeof value, typeStr);
       }
