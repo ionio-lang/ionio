@@ -282,19 +282,17 @@ export class Transaction implements TransactionInterface {
       );
     }
 
-    const encodedArgs = this.functionArgs
-      .filter(arg => !isSigner(arg))
-      .map((arg, index) => {
-        // Encode passed args (this also performs type checking)
-        return encodeArgument(
+
+    // check for a signature to be made
+    for (const [index,arg] of this.functionArgs.entries()) {
+      if (!isSigner(arg)) {
+        const encodedArgument = encodeArgument(
           arg,
           this.artifactFunction.functionInputs[index].type
         );
-      });
-
-    // check for a signature to be made
-    for (const arg of this.functionArgs) {
-      if (!isSigner(arg)) continue;
+        witnessStack.push(encodedArgument as Buffer)
+        continue;
+      }
 
       const signedPtxBase64 = await arg.signTransaction(this.psbt.toBase64());
       const signedPtx = Psbt.fromBase64(signedPtxBase64);
@@ -304,8 +302,9 @@ export class Transaction implements TransactionInterface {
         this.fundingUtxoIndex
       ];
       if (tapScriptSig && tapScriptSig.length > 0) {
-        witnessStack = [...tapScriptSig.map(s => s.signature), ...witnessStack];
+        tapScriptSig.forEach(s => witnessStack.push(s.signature));
       } else if (tapKeySig) {
+        // is the key-path spend always first element of stack?
         witnessStack = [tapKeySig, ...witnessStack];
       }
     }
@@ -314,8 +313,7 @@ export class Transaction implements TransactionInterface {
       return {
         finalScriptSig: undefined,
         finalScriptWitness: witnessStackToScriptWitness([
-          ...witnessStack,
-          ...(encodedArgs as Buffer[]),
+          ...witnessStack.reverse(),
           input.tapLeafScript![0].script,
           input.tapLeafScript![0].controlBlock,
         ]),

@@ -12,12 +12,13 @@ export function sleep(ms: number): Promise<any> {
 
 export async function faucetComplex(
   address: string,
-  amountFractional: number
+  amountFractional: number,
+  asset?: string,
 ): Promise<{
   utxo: { value: number; asset: string; txid: string; vout: number };
   prevout: TxOutput;
 }> {
-  const utxo = await faucet(address, amountFractional);
+  const utxo = await faucet(address, amountFractional, asset);
   const txhex = await fetchTx(utxo.txid);
   const prevout = Transaction.fromHex(txhex).outs[utxo.vout];
   return {
@@ -43,9 +44,15 @@ export async function mintComplex(
   };
 }
 
-export async function faucet(address: string, amount: number): Promise<any> {
+
+export async function getNewAddress(): Promise<string> {
+  const response = await axios.get(`${APIURL}/getnewaddress`);
+  return response.data.address;
+}
+
+export async function faucet(address: string, amount: number, asset?: string): Promise<any> {
   try {
-    const resp = await axios.post(`${APIURL}/faucet`, { address, amount });
+    const resp = await axios.post(`${APIURL}/faucet`, { address, amount, asset });
     if (resp.status !== 200) {
       throw new Error('Invalid address');
     }

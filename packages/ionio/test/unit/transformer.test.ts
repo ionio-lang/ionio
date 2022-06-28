@@ -31,8 +31,11 @@ describe('transformArtifact', () => {
       templateString('borrowAmount2'),
       templateString('payoutAmount2'),
       templateString('borrowePk'),
+      templateString('oraclePk'),
       templateString('payoutPk'),
       templateString('issuerScriptProgram'),
+      templateString('priceLevel'),
+      templateString('setupTimestamp'),
     ]);
 
     expect(artifact.constructorInputs[0].name).toStrictEqual('borrowAmount2');
