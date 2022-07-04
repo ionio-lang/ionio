@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[535],{5641:function(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Ionio @ BTC++","permalink":"/blog/ionio-btc++"}]}')}}]);
