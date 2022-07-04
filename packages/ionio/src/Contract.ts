@@ -7,6 +7,7 @@ import {
   TxOutput,
   bip341,
   NetworkExtended as Network,
+  confidential,
 } from 'ldk';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
@@ -19,6 +20,7 @@ export interface ContractInterface {
   name: string;
   address: string;
   fundingUtxo: Output | UnblindedOutput | undefined;
+  unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined;
   bytesize: number;
   functions: {
     [name: string]: ContractFunction;
@@ -33,6 +35,7 @@ export class Contract implements ContractInterface {
   name: string;
   address: string;
   fundingUtxo: Output | UnblindedOutput | undefined;
+  unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined;
   // TODO add bytesize calculation
   bytesize: number = 0;
 
@@ -100,7 +103,12 @@ export class Contract implements ContractInterface {
     return bip341.toHashTree(this.leaves, true);
   }
 
-  from(txid: string, vout: number, prevout: TxOutput): this {
+  from(
+    txid: string,
+    vout: number,
+    prevout: TxOutput,
+    unblindData?: confidential.UnblindOutputResult
+  ): this {
     // check we are using an actual funding outpoint for the script of the contract
     if (!prevout.script.equals(this.scriptPubKey))
       throw new Error(
@@ -112,6 +120,10 @@ export class Contract implements ContractInterface {
       vout,
       prevout,
     };
+
+    if (unblindData) {
+      this.unblindDataFundingUtxo = unblindData;
+    }
 
     return this;
   }
@@ -144,6 +156,7 @@ export class Contract implements ContractInterface {
         functionArgs,
         selector,
         this.fundingUtxo,
+        this.unblindDataFundingUtxo,
         {
           leaves: this.leaves,
           parity: this.parity,
