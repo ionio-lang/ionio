@@ -23,8 +23,16 @@ describe('TransferWithKey', () => {
       ecc
     );
     // re-using script's pubkey for the blinding one
-    const confidentialAddress = address.toConfidential(contract.address, alicePk.publicKey);
-    const response = await faucetComplex(confidentialAddress, 0.0001, network.assetHash, alicePk.privateKey);
+    const confidentialAddress = address.toConfidential(
+      contract.address,
+      alicePk.publicKey
+    );
+    const response = await faucetComplex(
+      confidentialAddress,
+      0.0001,
+      network.assetHash,
+      alicePk.privateKey
+    );
 
     prevout = response.prevout;
     utxo = response.utxo;
@@ -39,7 +47,12 @@ describe('TransferWithKey', () => {
       const feeAmount = 100;
 
       // lets instantiare the contract using the funding transacton
-      const instance = contract.from(utxo.txid, utxo.vout, prevout, unblindData);
+      const instance = contract.from(
+        utxo.txid,
+        utxo.vout,
+        prevout,
+        unblindData
+      );
 
       const tx = instance.functions
         .transfer(signer)

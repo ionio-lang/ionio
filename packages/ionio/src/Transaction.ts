@@ -78,11 +78,7 @@ export class Transaction implements TransactionInterface {
 
     const parityBit = Buffer.of(leafVersion + this.taprootData.parity);
 
-    const controlBlock = Buffer.concat([
-      parityBit,
-      H_POINT.slice(1),
-      ...path,
-    ]);
+    const controlBlock = Buffer.concat([parityBit, H_POINT.slice(1), ...path]);
 
     let sequence;
     this.artifactFunction.require.forEach(requirement => {
@@ -168,7 +164,7 @@ export class Transaction implements TransactionInterface {
       const blindKey = address.fromConfidential(recipientAddress).blindingKey;
       const index = this.psbt.data.outputs.length - 1;
       this.outputBlindingPubKeys.set(index, blindKey);
-    } catch (ignore) { }
+    } catch (ignore) {}
 
     return this;
   }

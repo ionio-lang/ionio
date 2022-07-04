@@ -14,11 +14,11 @@ export async function faucetComplex(
   address: string,
   amountFractional: number,
   asset?: string,
-  blindingKey?: Buffer,
+  blindingKey?: Buffer
 ): Promise<{
   utxo: { value: number; asset: string; txid: string; vout: number };
   prevout: TxOutput;
-  unblindData?: confidential.UnblindOutputResult,
+  unblindData?: confidential.UnblindOutputResult;
 }> {
   const utxo = await faucet(address, amountFractional, asset);
   const txhex = await fetchTx(utxo.txid);
@@ -27,7 +27,7 @@ export async function faucetComplex(
   if (blindingKey) {
     const unblindData = await confidential.unblindOutputWithKey(
       prevout,
-      blindingKey,
+      blindingKey
     );
     return { utxo, prevout, unblindData };
   }

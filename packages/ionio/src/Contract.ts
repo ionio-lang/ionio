@@ -103,7 +103,12 @@ export class Contract implements ContractInterface {
     return bip341.toHashTree(this.leaves, true);
   }
 
-  from(txid: string, vout: number, prevout: TxOutput, unblindData?: confidential.UnblindOutputResult): this {
+  from(
+    txid: string,
+    vout: number,
+    prevout: TxOutput,
+    unblindData?: confidential.UnblindOutputResult
+  ): this {
     // check we are using an actual funding outpoint for the script of the contract
     if (!prevout.script.equals(this.scriptPubKey))
       throw new Error(
