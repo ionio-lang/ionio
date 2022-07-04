@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import { Psbt, Transaction, TxOutput } from 'ldk';
+import { confidential, Psbt, Transaction, TxOutput } from 'ldk';
 import { NetworkExtended as Network, bip341 } from 'ldk';
 import { Signer } from '../src/Signer';
 const APIURL = process.env.APIURL || 'http://localhost:3001';
@@ -13,18 +13,26 @@ export function sleep(ms: number): Promise<any> {
 export async function faucetComplex(
   address: string,
   amountFractional: number,
-  asset?: string
+  asset?: string,
+  blindingKey?: Buffer,
 ): Promise<{
   utxo: { value: number; asset: string; txid: string; vout: number };
   prevout: TxOutput;
+  unblindData?: confidential.UnblindOutputResult,
 }> {
   const utxo = await faucet(address, amountFractional, asset);
   const txhex = await fetchTx(utxo.txid);
   const prevout = Transaction.fromHex(txhex).outs[utxo.vout];
-  return {
-    utxo,
-    prevout,
-  };
+
+  if (blindingKey) {
+    const unblindData = await confidential.unblindOutputWithKey(
+      prevout,
+      blindingKey,
+    );
+    return { utxo, prevout, unblindData };
+  }
+
+  return { utxo, prevout };
 }
 
 export async function mintComplex(
