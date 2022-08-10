@@ -2,7 +2,7 @@
   "contractName": "CrowdFundingWithCap",
   "constructorInputs": [
     {
-      "name": "endBlock",
+      "name": "endGoalBlock",
       "type": "number"
     },
     {
