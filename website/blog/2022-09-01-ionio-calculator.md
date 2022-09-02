@@ -76,7 +76,7 @@ Install depenendencies
 yarn add @ionio-lang/ionio tiny-secp256k1
 ```
 ```
-yarn liquidjs-lib-taproot
+yarn add liquidjs-lib-taproot
 ```
 
 
