@@ -73,7 +73,10 @@ cd ionio-app
 
 Install depenendencies 
 ```
-yarn add @ionio-lang/ionio tiny-secp256k1 liquidjs-lib-taproot
+yarn add @ionio-lang/ionio tiny-secp256k1
+```
+```
+yarn liquidjs-lib-taproot
 ```
 
 
