@@ -1,34 +1,34 @@
 ---
-title: Ionio @ BTC++
-description: Ionio SDK Tutorial for the BTC++ workshop on Liquid smart contract
-slug: ionio-btc++
+title: Build your first Liquid smart contract with Ionio SDK
+description: Build a calculator smart contract with Elements Tapscript to be deployed on the Liquid Network
+slug: ionio-calculator
 authors:
   - name: Marco Argentieri
     title: Ionio contributor
     url: https://github.com/tiero
     image_url: https://github.com/tiero.png
-tags: [ionio, sdk, tutorial, btc++, workshop]
+tags: [ionio, sdk, tutorial, smart contract, workshop, liquid network]
 hide_table_of_contents: false
 ---
 
-You got your faboulos script with all those cute opcodes, and now what? Ionio SDK FTW!
+You got your faboulos script with all those cute opcodes, and now what? **Ionio SDK FTW!**
 
 <!--truncate-->
 
 
 ## Context
 
-In the Bitcoin world, most of the possible scripts are de-facto standards all wallets follow and they are defined by the developer.
+In the Bitcoin world, most of the possible scripts are *de-facto* standards all wallets follow, set in stone by the wallet developer.
 
-In a **post-Simplicty** world, Bitcoin (tap)scripts will have much more capabilities, but 
-stadardize all possible combination becomes impossibile, will be the user (or any external app he's visiting most likely) to load at runtime.
+In a **post-Simplicty** world, Bitcoin (tap)scripts will introduce much more capabilities, but 
+stadardize all possible combination in all wallets becomes impossibile, will be the user (or any external app he's interacting with) to instruct the wallet what to do at runtime.
 
 
-**Output Descriptors** and **Miniscript** could be a good candidate on how to generalize a way to import script, but i) lack of extensibility ii) need to write a parser/compiler for each language makes it a bit [cumbersome for wallet/libraries to work with](/docs/Artifact#alternatives), plus the "policy oriented" nature does not well fit the introspection (ie. covenants) paradigm Simplicity will allow.
+**Output Descriptors** and **Miniscript** could be a good candidate on how to generalize a way to import script, but i) lack of extensibility in cooperative script building scenarios ii) need to write a parser/compiler for each language makes it a bit [cumbersome for wallet/libraries to work with](/docs/Artifact#alternatives), plus the "policy oriented" nature does not well fit the introspection (ie. covenants) paradigm Simplicity will allow.
 
-The feature to import a script is fundamental for the wallet to **track balances** and to know **how spend** those coins in the future.
+The feature to import a **script template** is fundamental for the wallet to **track balances** and to know **how spend** those coins in the future.
 
-The **Ionio Artifact** it's a JSON file that fully describe how a "Pay to Taproot" address is constructed, how the contract behaves and what it should be expected to do spend it in the future. The documentation fot the data structure can be found [here](/docs/Artifact#structure)
+The **Ionio Artifact** it's a JSON file that fully describe how a **Pay to Taproot** address is constructed, how the contract behaves and what it should be expected to do spend it in the future. The documentation fot the data structure can be found [here](/docs/Artifact#structure)
 
 # 🧮 You first "calculator"
  
@@ -37,7 +37,8 @@ The **Ionio Artifact** it's a JSON file that fully describe how a "Pay to Taproo
 
 - [Docker Linux](https://docs.docker.com/desktop/linux/install) or [Docker Desktop for Mac](https://docs.docker.com/desktop/mac/install)
 - [Nigiri](https://nigiri.vulpem.com)
-- nodejs/yarn or [replit](https://replit.com)
+- nodejs
+- yarn (optional, you can use npm)
 
 
 ### Nigiri
@@ -56,33 +57,27 @@ nigiri start --liquid
 
 ### Install dependencies & config
 
-1. Pull template and install dependencies
+1. Project setup
+
+
+Pull a Svelte starter app
 
 ```sh
 npx degit "tiero/svelte-webpack-bulma" ionio-app
+```
+
+Enter the folder 
+```
 cd ionio-app
-yarn add @ionio-lang/ionio tiny-secp256k1 liquidjs-lib-taproot
+```
+
+Install depenendencies 
+```
+yarn add @ionio-lang/ionio tiny-secp256k1 
 ```
 
 
-> or use [Replit](https://replit.com) importing the template from Github `github.com/tiero/svelte-webpack-bulma`
-
-2. Make bundler to import JSONs
-
-Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root folder
-
-```json
-{
-		"extends": "@tsconfig/svelte/tsconfig.json",
-		"include": ["src/**/*", "src/node_modules/**/*"],
-		"exclude": ["node_modules/*", "__sapper__/*", "static/*"],
-		"compilerOptions": {
-			"resolveJsonModule": true,
-		}
-	}
-```
-
-3. Create a `calculator.json` file in `src`
+2. Create a `calculator.json` file in `src`
 
 ```json
 {
@@ -130,7 +125,7 @@ Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root
     {contractAddress}
   </p>
   <hr />
-  <button class="button is-primary"> Sum must be 3 </button>
+
   {#if txhex.length > 0} 
     <hr />
     <p class="subtitle">Raw transaction</p>
@@ -144,7 +139,7 @@ Add `compilerOptions` > `resolveJsonModule` > `true` in the `tsconfig.json` root
 ```ts
 <script type="ts">
   import { Artifact, Contract } from '@ionio-lang/ionio';
-  import { networks } from 'liquidjs-lib';
+  import { networks, networks, address, confidential, AssetHash } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './calculator.json';
 
@@ -200,14 +195,18 @@ const onClick = async () => {
     
   // attach to the funded contract using the utxo
   const instance = contract.from(
+    // tranaction ID
     txid,
+    // previous output index
     parseInt(vout),
+    // the full previous output 
     {
       script: address.toOutputScript(contractAddress),
       value: confidential.satoshiToConfidentialValue(sats),
       asset: AssetHash.fromHex(network.assetHash, false).bytes,
       nonce: Buffer.alloc(0),
-    });
+    }
+  );
 
 
   const recipient = prompt('Enter a recipient to send funds to');
