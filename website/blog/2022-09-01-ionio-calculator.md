@@ -73,7 +73,10 @@ cd ionio-app
 
 Install depenendencies 
 ```
-yarn add @ionio-lang/ionio tiny-secp256k1 
+yarn add @ionio-lang/ionio tiny-secp256k1
+```
+```
+yarn add liquidjs-lib-taproot
 ```
 
 
@@ -139,7 +142,7 @@ yarn add @ionio-lang/ionio tiny-secp256k1
 ```ts
 <script type="ts">
   import { Artifact, Contract } from '@ionio-lang/ionio';
-  import { networks, networks, address, confidential, AssetHash } from 'liquidjs-lib';
+  import { networks, address, confidential, AssetHash } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './calculator.json';
 
