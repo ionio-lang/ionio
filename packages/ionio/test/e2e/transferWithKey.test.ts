@@ -23,7 +23,6 @@ describe('TransferWithKey', () => {
       ecc
     );
 
-
     /**
      *     // re-using script's pubkey for the blinding one
       const confidentialAddress = address.toConfidential(
@@ -36,7 +35,7 @@ describe('TransferWithKey', () => {
     const response = await faucetComplex(
       contract.address,
       0.0001,
-      network.assetHash,
+      network.assetHash
       //alicePk.privateKey
     );
 
@@ -56,7 +55,7 @@ describe('TransferWithKey', () => {
       const instance = contract.from(
         utxo.txid,
         utxo.vout,
-        prevout,
+        prevout
         //unblindData
       );
 
