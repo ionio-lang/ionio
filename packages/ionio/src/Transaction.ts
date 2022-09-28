@@ -173,7 +173,7 @@ export class Transaction implements TransactionInterface {
     value: number = 0,
     assetID: string = this.network.assetHash,
     hexChunks: string[] = [],
-    blindingPublicKeyHex?: string,
+    blindingPublicKeyHex?: string
   ): this {
     this.psbt.addOutput({
       script: script.compile([
@@ -185,7 +185,10 @@ export class Transaction implements TransactionInterface {
       nonce: Buffer.alloc(0),
     });
     if (blindingPublicKeyHex) {
-      this.outputBlindingPubKeys.set(this.psbt.data.outputs.length - 1, Buffer.from(blindingPublicKeyHex, 'hex'));
+      this.outputBlindingPubKeys.set(
+        this.psbt.data.outputs.length - 1,
+        Buffer.from(blindingPublicKeyHex, 'hex')
+      );
     }
     return this;
   }
