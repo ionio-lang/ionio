@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { alicePk, network } from '../fixtures/vars';
-import { address, payments, TxOutput, confidential } from 'ldk';
+import { address, payments, TxOutput } from 'ldk';
 import { broadcast, faucetComplex, getSignerWithECPair } from '../utils';
 import { Signer } from '../../src/Signer';
 import { Artifact } from '../../src/Artifact';
@@ -10,7 +10,7 @@ describe('TransferWithKey', () => {
   let contract: Contract;
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
-  let unblindData: confidential.UnblindOutputResult | undefined;
+  //let unblindData: confidential.UnblindOutputResult | undefined;
   const signer: Signer = getSignerWithECPair(alicePk, network);
 
   beforeAll(async () => {
@@ -22,21 +22,26 @@ describe('TransferWithKey', () => {
       network,
       ecc
     );
-    // re-using script's pubkey for the blinding one
-    const confidentialAddress = address.toConfidential(
-      contract.address,
-      alicePk.publicKey
-    );
+
+    /**
+     *     // re-using script's pubkey for the blinding one
+      const confidentialAddress = address.toConfidential(
+        contract.address,
+        alicePk.publicKey
+      );
+     * 
+     */
+
     const response = await faucetComplex(
-      confidentialAddress,
+      contract.address,
       0.0001,
-      network.assetHash,
-      alicePk.privateKey
+      network.assetHash
+      //alicePk.privateKey
     );
 
     prevout = response.prevout;
     utxo = response.utxo;
-    unblindData = response.unblindData || undefined;
+    //unblindData = response.unblindData || undefined;
   });
 
   describe('transfer', () => {
@@ -50,8 +55,8 @@ describe('TransferWithKey', () => {
       const instance = contract.from(
         utxo.txid,
         utxo.vout,
-        prevout,
-        unblindData
+        prevout
+        //unblindData
       );
 
       const tx = instance.functions

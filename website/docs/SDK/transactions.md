@@ -22,19 +22,19 @@ The `withRecipient()` function allows you to add outputs to the transaction. Thi
 
 ### withOpReturn()
 ```ts
-transaction.withOpReturn(hexChunks: string[], value: number, assetID: string): TransactionInterface;
+transaction.withOpReturn(value: number, assetID: string, hexChunks: string[],  blindingPublicKeyHex?: string): TransactionInterface;
 ```
 
 The `withOpReturn()` function allows you to add `OP_RETURN` outputs to the transaction. The `hexChunks` parameter include hex strings. The `amount` parameter is the amount of the output in satoshis. The `assetID` parameter is the asset hash, if not provided, the Bitcoin asset hash for the selected network will be used.
 
 #### Example
 ```ts
-.withOpReturn(['6d02'])
+.withOpReturn(0, 'assetHash', ['6d02'])
 ```
 
 ### withUtxo()
 ```ts
-transaction.withUtxo(outpoint: Outpoint): TransactionInterface;
+transaction.withUtxo(utxo: Output | UnblindedOutput): TransactionInterface;
 ```
 
 The `withUtxo()` function allows you to provide one or many UTXOs to be used in the transaction. This function can be called any number of times, and the provided UTXOs will be added to the list of earlier added UTXOs.
@@ -52,13 +52,10 @@ The `withUtxo()` function allows you to provide one or many UTXOs to be used in 
 
 ### unlock()
 ```ts
-async transaction.unlock(signer?: Signer): Promise<TransactionInterface>;
+async transaction.unlock(): Promise<TransactionInterface>;
 ```
 
 After completing a transaction, the `unlock()` function can be used to finalize the transaction. An incomplete transaction cannot be sent.
-
-If the contract needs a signature to be sent (ie. a `CHECKSIG` opcode), the `unlock()` function can be called with an optional `signer` parameter. This parameter is an `Signer` interface, which can be used to provide the signature.
-
 
 ```ts
 export interface Signer {
