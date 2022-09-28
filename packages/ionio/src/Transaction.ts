@@ -33,7 +33,8 @@ export interface TransactionInterface {
   withOpReturn(
     value: number,
     assetID: string,
-    hexChunks: string[]
+    hexChunks: string[],
+    blindingPublicKeyHex?: string
   ): TransactionInterface;
   withFeeOutput(fee: number): TransactionInterface;
   unlock(): Promise<TransactionInterface>;
