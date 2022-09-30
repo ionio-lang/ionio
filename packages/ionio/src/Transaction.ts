@@ -99,7 +99,9 @@ export class Transaction implements TransactionInterface {
           ),
           'hex'
         );
-        this.pset = Creator.newPset({ locktime: script.number.decode(valueBuffer) });
+        this.pset = Creator.newPset({
+          locktime: script.number.decode(valueBuffer),
+        });
         // Note: nSequence MUST be <= 0xfffffffe otherwise LockTime is ignored, and is immediately spendable.
         sequence = 0xfffffffe;
         return;
@@ -121,15 +123,14 @@ export class Transaction implements TransactionInterface {
 
     const updater = new Updater(this.pset);
     updater.addInputs([
-      new CreatorInput(this.fundingUtxo.txid, this.fundingUtxo.vout, sequence)
+      new CreatorInput(this.fundingUtxo.txid, this.fundingUtxo.vout, sequence),
     ]);
     updater.addInWitnessUtxo(0, this.fundingUtxo.prevout);
     updater.addInTapLeafScript(0, {
       controlBlock,
       leafVersion,
-      script: Buffer.from(leafToSpend.scriptHex, 'hex')
+      script: Buffer.from(leafToSpend.scriptHex, 'hex'),
     });
-
 
     this.fundingUtxoIndex = this.pset.inputs.length - 1;
     // only add unblind data if the prevout of the input is confidential
@@ -146,16 +147,13 @@ export class Transaction implements TransactionInterface {
     const updater = new Updater(this.pset);
 
     // add a new input
-    updater.addInputs([
-      new CreatorInput(utxo.txid, utxo.vout)
-    ]);
+    updater.addInputs([new CreatorInput(utxo.txid, utxo.vout)]);
 
     // get the index of last added input
     const index = this.pset.inputs.length - 1;
 
     // add the prevout
     updater.addInWitnessUtxo(index, utxo.prevout);
-
 
     // only add unblind data if the prevout of the input is confidential
     if (utxo && isUnblindedOutput(utxo) && isConfidentialOutput(utxo.prevout)) {
@@ -175,15 +173,17 @@ export class Transaction implements TransactionInterface {
     assetID: string = this.network.assetHash
   ): this {
     const script = address.toOutputScript(recipientAddress);
-    const blindingKey = address.isConfidential(recipientAddress) ? address.fromConfidential(recipientAddress).blindingKey : undefined;
+    const blindingKey = address.isConfidential(recipientAddress)
+      ? address.fromConfidential(recipientAddress).blindingKey
+      : undefined;
 
     // instantiate Updater
     const updater = new Updater(this.pset);
 
-    // add a new outout. 
+    // add a new outout.
     // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
     updater.addOutputs([
-      new CreatorOutput(assetID, value, script, blindingKey, 0)
+      new CreatorOutput(assetID, value, script, blindingKey, 0),
     ]);
 
     this.pset = updater.pset;
@@ -200,15 +200,17 @@ export class Transaction implements TransactionInterface {
       script.OPS.OP_RETURN,
       ...hexChunks.map(chunk => Buffer.from(chunk, 'hex')),
     ]);
-    const blindingKey = blindingPublicKeyHex ? Buffer.from(blindingPublicKeyHex, 'hex') : undefined;
+    const blindingKey = blindingPublicKeyHex
+      ? Buffer.from(blindingPublicKeyHex, 'hex')
+      : undefined;
 
     // instantiate Updater
     const updater = new Updater(this.pset);
 
-    // add a new outout. 
+    // add a new outout.
     // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
     updater.addOutputs([
-      new CreatorOutput(assetID, value, opRetScript, blindingKey, 0)
+      new CreatorOutput(assetID, value, opRetScript, blindingKey, 0),
     ]);
 
     this.pset = updater.pset;
@@ -219,9 +221,7 @@ export class Transaction implements TransactionInterface {
     // instantiate Updater
     const updater = new Updater(this.pset);
 
-    updater.addOutputs([
-      new CreatorOutput(this.network.assetHash, value)
-    ]);
+    updater.addOutputs([new CreatorOutput(this.network.assetHash, value)]);
 
     this.pset = updater.pset;
     return this;
@@ -304,7 +304,9 @@ export class Transaction implements TransactionInterface {
 
     // check for blinding to be made
     if (this.inputBlindingData.size > 0) {
-      const needsBlinding = this.pset.outputs.some((o: PsetOutput) => o.needsBlinding());
+      const needsBlinding = this.pset.outputs.some((o: PsetOutput) =>
+        o.needsBlinding()
+      );
       if (!needsBlinding)
         throw new Error(
           'if one confidential input is spent, at least one of the outputs must be blinded'
@@ -315,14 +317,14 @@ export class Transaction implements TransactionInterface {
       const ownedInputs = await zkpGenerator.unblindInputs(this.pset);
       const outputBlindingArgs = await zkpGenerator.blindOutputs(
         this.pset,
-        ZKPGenerator.ECCKeysGenerator(this.ecclib),
+        ZKPGenerator.ECCKeysGenerator(this.ecclib)
       );
 
       const blinder = new Blinder(
         this.pset,
         ownedInputs,
         zkpValidator,
-        zkpGenerator,
+        zkpGenerator
       );
 
       await blinder.blindLast({ outputBlindingArgs });
