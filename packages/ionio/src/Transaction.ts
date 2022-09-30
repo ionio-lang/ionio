@@ -7,7 +7,7 @@ import {
   witnessStackToScriptWitness,
   bip341,
   NetworkExtended as Network,
-} from 'ldk';
+} from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
 import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';

@@ -1,4 +1,4 @@
-import { bip341, crypto } from 'ldk';
+import { bip341, crypto } from 'liquidjs-lib';
 
 export function tweakPublicKey(
   publicKey: Buffer,

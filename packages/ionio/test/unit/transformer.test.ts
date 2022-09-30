@@ -1,4 +1,4 @@
-import { AssetHash } from 'ldk';
+import { AssetHash } from 'liquidjs-lib';
 import {
   replaceArtifactConstructorWithArguments,
   templateString,

@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import { confidential, Psbt, Transaction, TxOutput } from 'ldk';
-import { NetworkExtended as Network, bip341 } from 'ldk';
+import { confidential, Psbt, Transaction, TxOutput,  NetworkExtended as Network, bip341 } from 'liquidjs-lib';
 import { Signer } from '../src/Signer';
 const APIURL = process.env.APIURL || 'http://localhost:3001';
 

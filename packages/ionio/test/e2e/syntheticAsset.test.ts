@@ -1,9 +1,9 @@
 import { Contract, Signer } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { alicePk, bobPk, oraclePk, network } from '../fixtures/vars';
-import { payments, address, TxOutput } from 'ldk';
+import { payments, address, TxOutput } from 'liquidjs-lib';
 import crypto from 'crypto';
-import { writeUInt64LE } from 'liquidjs-lib/ts_src/bufferutils';
+import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
 import {
   broadcast,
   faucetComplex,

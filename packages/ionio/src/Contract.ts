@@ -8,7 +8,7 @@ import {
   bip341,
   NetworkExtended as Network,
   confidential,
-} from 'ldk';
+} from 'liquidjs-lib';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
