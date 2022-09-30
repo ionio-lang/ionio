@@ -1,12 +1,18 @@
 import {
   address,
-  AssetHash,
   confidential,
-  Psbt,
   script,
-  witnessStackToScriptWitness,
   bip341,
   NetworkExtended as Network,
+  Pset,
+  Creator,
+  CreatorInput,
+  Updater,
+  CreatorOutput,
+  PsetOutput,
+  OwnedInput,
+  Blinder,
+  Finalizer,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -21,9 +27,10 @@ import {
   UnblindedOutput,
   isConfidentialOutput,
 } from 'ldk';
+import { ZKPGenerator, ZKPValidator } from 'liquidjs-lib/src/confidential';
 
 export interface TransactionInterface {
-  psbt: Psbt;
+  pset: Pset;
   withUtxo(outpoint: Output | UnblindedOutput): TransactionInterface;
   withRecipient(
     addressOrScript: string | Buffer,
@@ -46,14 +53,14 @@ export interface TaprootData {
 }
 
 export class Transaction implements TransactionInterface {
-  public psbt: Psbt;
+  public pset: Pset;
 
   private fundingUtxoIndex: number = 0;
   private inputBlindingData = new Map<
     number,
     confidential.UnblindOutputResult
   >();
-  private outputBlindingPubKeys = new Map<number, Buffer>();
+  private inputBlinders: OwnedInput[] = [] as any;
 
   constructor(
     private constructorInputs: Parameter[],
@@ -67,7 +74,7 @@ export class Transaction implements TransactionInterface {
     private network: Network,
     private ecclib: bip341.TinySecp256k1Interface
   ) {
-    this.psbt = new Psbt({ network: this.network });
+    this.pset = Creator.newPset({});
 
     if (!this.fundingUtxo) return;
 
@@ -92,7 +99,7 @@ export class Transaction implements TransactionInterface {
           ),
           'hex'
         );
-        this.psbt.setLocktime(script.number.decode(valueBuffer));
+        this.pset = Creator.newPset({ locktime: script.number.decode(valueBuffer) });
         // Note: nSequence MUST be <= 0xfffffffe otherwise LockTime is ignored, and is immediately spendable.
         sequence = 0xfffffffe;
         return;
@@ -112,38 +119,53 @@ export class Transaction implements TransactionInterface {
       }
     });
 
-    this.psbt.addInput({
-      hash: this.fundingUtxo.txid,
-      index: this.fundingUtxo.vout,
-      sequence,
-      witnessUtxo: this.fundingUtxo.prevout,
-      tapLeafScript: [
-        {
-          leafVersion: leafVersion,
-          script: Buffer.from(leafToSpend.scriptHex, 'hex'),
-          controlBlock,
-        },
-      ],
+    const updater = new Updater(this.pset);
+    updater.addInputs([
+      new CreatorInput(this.fundingUtxo.txid, this.fundingUtxo.vout, sequence)
+    ]);
+    updater.addInWitnessUtxo(0, this.fundingUtxo.prevout);
+    updater.addInTapLeafScript(0, {
+      controlBlock,
+      leafVersion,
+      script: Buffer.from(leafToSpend.scriptHex, 'hex')
     });
-    this.fundingUtxoIndex = this.psbt.data.inputs.length - 1;
+
+
+    this.fundingUtxoIndex = this.pset.inputs.length - 1;
     // only add unblind data if the prevout of the input is confidential
     if (unblindDataFundingUtxo) {
-      const index = this.psbt.data.inputs.length - 1;
-      this.inputBlindingData.set(index, unblindDataFundingUtxo);
+      this.inputBlinders.push({
+        index: this.fundingUtxoIndex,
+        ...unblindDataFundingUtxo,
+      });
     }
   }
 
   withUtxo(utxo: Output | UnblindedOutput): this {
-    this.psbt.addInput({
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: utxo.prevout,
-    });
+    // instantiate Updater
+    const updater = new Updater(this.pset);
+
+    // add a new input
+    updater.addInputs([
+      new CreatorInput(utxo.txid, utxo.vout)
+    ]);
+
+    // get the index of last added input
+    const index = this.pset.inputs.length - 1;
+
+    // add the prevout
+    updater.addInWitnessUtxo(index, utxo.prevout);
+
+
     // only add unblind data if the prevout of the input is confidential
     if (utxo && isUnblindedOutput(utxo) && isConfidentialOutput(utxo.prevout)) {
-      const index = this.psbt.data.inputs.length - 1;
-      this.inputBlindingData.set(index, utxo.unblindData);
+      this.inputBlinders.push({
+        index,
+        ...utxo.unblindData,
+      });
     }
+
+    this.pset = updater.pset;
     return this;
   }
 
@@ -152,21 +174,19 @@ export class Transaction implements TransactionInterface {
     value: number,
     assetID: string = this.network.assetHash
   ): this {
-    let script = address.toOutputScript(recipientAddress);
+    const script = address.toOutputScript(recipientAddress);
+    const blindingKey = address.isConfidential(recipientAddress) ? address.fromConfidential(recipientAddress).blindingKey : undefined;
 
-    this.psbt.addOutput({
-      script,
-      value: confidential.satoshiToConfidentialValue(value),
-      asset: AssetHash.fromHex(assetID, false).bytes,
-      nonce: Buffer.alloc(0),
-    });
+    // instantiate Updater
+    const updater = new Updater(this.pset);
 
-    try {
-      const blindKey = address.fromConfidential(recipientAddress).blindingKey;
-      const index = this.psbt.data.outputs.length - 1;
-      this.outputBlindingPubKeys.set(index, blindKey);
-    } catch (ignore) {}
+    // add a new outout. 
+    // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
+    updater.addOutputs([
+      new CreatorOutput(assetID, value, script, blindingKey, 0)
+    ]);
 
+    this.pset = updater.pset;
     return this;
   }
 
@@ -176,31 +196,34 @@ export class Transaction implements TransactionInterface {
     hexChunks: string[] = [],
     blindingPublicKeyHex?: string
   ): this {
-    this.psbt.addOutput({
-      script: script.compile([
-        script.OPS.OP_RETURN,
-        ...hexChunks.map(chunk => Buffer.from(chunk, 'hex')),
-      ]),
-      value: confidential.satoshiToConfidentialValue(value),
-      asset: AssetHash.fromHex(assetID, false).bytes,
-      nonce: Buffer.alloc(0),
-    });
-    if (blindingPublicKeyHex) {
-      this.outputBlindingPubKeys.set(
-        this.psbt.data.outputs.length - 1,
-        Buffer.from(blindingPublicKeyHex, 'hex')
-      );
-    }
+    const opRetScript = script.compile([
+      script.OPS.OP_RETURN,
+      ...hexChunks.map(chunk => Buffer.from(chunk, 'hex')),
+    ]);
+    const blindingKey = blindingPublicKeyHex ? Buffer.from(blindingPublicKeyHex, 'hex') : undefined;
+
+    // instantiate Updater
+    const updater = new Updater(this.pset);
+
+    // add a new outout. 
+    // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
+    updater.addOutputs([
+      new CreatorOutput(assetID, value, opRetScript, blindingKey, 0)
+    ]);
+
+    this.pset = updater.pset;
     return this;
   }
 
   withFeeOutput(value: number): this {
-    this.psbt.addOutput({
-      script: Buffer.alloc(0),
-      value: confidential.satoshiToConfidentialValue(value),
-      asset: AssetHash.fromHex(this.network.assetHash, false).bytes,
-      nonce: Buffer.alloc(0),
-    });
+    // instantiate Updater
+    const updater = new Updater(this.pset);
+
+    updater.addOutputs([
+      new CreatorOutput(this.network.assetHash, value)
+    ]);
+
+    this.pset = updater.pset;
     return this;
   }
 
@@ -209,11 +232,11 @@ export class Transaction implements TransactionInterface {
 
     for (const { type, atIndex, expected } of this.artifactFunction.require) {
       const checkInputAtIndex = () => {
-        if (atIndex! >= this.psbt.data.inputs.length)
+        if (atIndex! >= this.pset.inputs.length)
           throw new Error(`${type} is required at index ${atIndex}`);
       };
       const checkOutputAtIndex = () => {
-        if (atIndex! >= this.psbt.data.outputs.length)
+        if (atIndex! >= this.pset.outputs.length)
           throw new Error(`${type} is required at index ${atIndex}`);
       };
       const introspect = new Introspect(
@@ -230,7 +253,7 @@ export class Transaction implements TransactionInterface {
 
         case 'outputscript': {
           checkOutputAtIndex();
-          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const outputAtIndex = this.pset.unsignedTx().outs[atIndex!];
           const script = expected as ScriptPubKey;
           introspect.checkOutputScript(script, outputAtIndex.script);
           break;
@@ -238,7 +261,7 @@ export class Transaction implements TransactionInterface {
 
         case 'outputvalue': {
           checkOutputAtIndex();
-          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const outputAtIndex = this.pset.unsignedTx().outs[atIndex!];
           const value = expected as string;
           introspect.checkOutputValue(value, outputAtIndex.value);
           break;
@@ -246,7 +269,7 @@ export class Transaction implements TransactionInterface {
 
         case 'outputasset': {
           checkOutputAtIndex();
-          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const outputAtIndex = this.pset.unsignedTx().outs[atIndex!];
           const asset = expected as string;
           introspect.checkOutputValue(asset, outputAtIndex.asset);
           break;
@@ -254,7 +277,7 @@ export class Transaction implements TransactionInterface {
 
         case 'outputnonce': {
           checkOutputAtIndex();
-          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const outputAtIndex = this.pset.unsignedTx().outs[atIndex!];
           const nonce = expected as string;
           introspect.checkOutputNonce(nonce, outputAtIndex.nonce);
           break;
@@ -263,7 +286,7 @@ export class Transaction implements TransactionInterface {
         case 'output': {
           checkOutputAtIndex();
 
-          const outputAtIndex = this.psbt.TX.outs[atIndex!];
+          const outputAtIndex = this.pset.unsignedTx().outs[atIndex!];
           const { script, value, nonce, asset } = expected as RequiredOutput;
 
           introspect.checkOutputValue(value, outputAtIndex.value);
@@ -281,16 +304,28 @@ export class Transaction implements TransactionInterface {
 
     // check for blinding to be made
     if (this.inputBlindingData.size > 0) {
-      if (this.outputBlindingPubKeys.size === 0)
+      const needsBlinding = this.pset.outputs.some((o: PsetOutput) => o.needsBlinding());
+      if (!needsBlinding)
         throw new Error(
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
 
-      await this.psbt.blindOutputsByIndex(
-        Psbt.ECCKeysGenerator(this.ecclib),
-        this.inputBlindingData,
-        this.outputBlindingPubKeys
+      const zkpValidator = new ZKPValidator();
+      const zkpGenerator = ZKPGenerator.fromOwnedInputs(this.inputBlinders);
+      const ownedInputs = await zkpGenerator.unblindInputs(this.pset);
+      const outputBlindingArgs = await zkpGenerator.blindOutputs(
+        this.pset,
+        ZKPGenerator.ECCKeysGenerator(this.ecclib),
       );
+
+      const blinder = new Blinder(
+        this.pset,
+        ownedInputs,
+        zkpValidator,
+        zkpGenerator,
+      );
+
+      await blinder.blindLast({ outputBlindingArgs });
     }
 
     // check for a signature to be made
@@ -304,11 +339,11 @@ export class Transaction implements TransactionInterface {
         continue;
       }
 
-      const signedPtxBase64 = await arg.signTransaction(this.psbt.toBase64());
-      const signedPtx = Psbt.fromBase64(signedPtxBase64);
-      this.psbt = signedPtx;
+      const signedPtxBase64 = await arg.signTransaction(this.pset.toBase64());
+      const signedPtx = Pset.fromBase64(signedPtxBase64);
+      this.pset = signedPtx;
 
-      const { tapKeySig, tapScriptSig } = this.psbt.data.inputs[
+      const { tapKeySig, tapScriptSig } = this.pset.inputs[
         this.fundingUtxoIndex
       ];
       if (tapScriptSig && tapScriptSig.length > 0) {
@@ -321,16 +356,8 @@ export class Transaction implements TransactionInterface {
       }
     }
 
-    this.psbt.finalizeInput(this.fundingUtxoIndex!, (_, input) => {
-      return {
-        finalScriptSig: undefined,
-        finalScriptWitness: witnessStackToScriptWitness([
-          ...witnessStack.reverse(),
-          input.tapLeafScript![0].script,
-          input.tapLeafScript![0].controlBlock,
-        ]),
-      };
-    });
+    const finalizer = new Finalizer(this.pset);
+    finalizer.finalize();
     return this;
   }
 }
