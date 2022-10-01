@@ -56,10 +56,6 @@ export class Transaction implements TransactionInterface {
   public pset: Pset;
 
   private fundingUtxoIndex: number = 0;
-  private inputBlindingData = new Map<
-    number,
-    confidential.UnblindOutputResult
-  >();
   private inputBlinders: OwnedInput[] = [] as any;
 
   constructor(
@@ -303,7 +299,7 @@ export class Transaction implements TransactionInterface {
     }
 
     // check for blinding to be made
-    if (this.inputBlindingData.size > 0) {
+    if (this.inputBlinders.length > 0) {
       const needsBlinding = this.pset.outputs.some((o: PsetOutput) =>
         o.needsBlinding()
       );
