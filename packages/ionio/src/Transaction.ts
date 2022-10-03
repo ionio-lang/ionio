@@ -13,6 +13,9 @@ import {
   OwnedInput,
   Blinder,
   Finalizer,
+  Extractor,
+  Transaction as LiquidTransaction,
+  witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -28,6 +31,7 @@ import {
   isConfidentialOutput,
 } from 'ldk';
 import { ZKPGenerator, ZKPValidator } from 'liquidjs-lib/src/confidential';
+import { TapLeafScript } from 'liquidjs-lib/src/psetv2/interfaces';
 
 export interface TransactionInterface {
   pset: Pset;
@@ -121,14 +125,17 @@ export class Transaction implements TransactionInterface {
     updater.addInputs([
       new CreatorInput(this.fundingUtxo.txid, this.fundingUtxo.vout, sequence),
     ]);
-    updater.addInWitnessUtxo(0, this.fundingUtxo.prevout);
-    updater.addInTapLeafScript(0, {
+    updater.addInWitnessUtxo(this.fundingUtxoIndex, this.fundingUtxo.prevout);
+    updater.addInTapLeafScript(this.fundingUtxoIndex, {
       controlBlock,
       leafVersion,
       script: Buffer.from(leafToSpend.scriptHex, 'hex'),
     });
+    updater.addInSighashType(
+      this.fundingUtxoIndex,
+      LiquidTransaction.SIGHASH_ALL
+    );
 
-    this.fundingUtxoIndex = this.pset.inputs.length - 1;
     // only add unblind data if the prevout of the input is confidential
     if (unblindDataFundingUtxo) {
       this.inputBlinders.push({
@@ -159,7 +166,6 @@ export class Transaction implements TransactionInterface {
       });
     }
 
-    this.pset = updater.pset;
     return this;
   }
 
@@ -182,7 +188,6 @@ export class Transaction implements TransactionInterface {
       new CreatorOutput(assetID, value, script, blindingKey, 0),
     ]);
 
-    this.pset = updater.pset;
     return this;
   }
 
@@ -209,7 +214,6 @@ export class Transaction implements TransactionInterface {
       new CreatorOutput(assetID, value, opRetScript, blindingKey, 0),
     ]);
 
-    this.pset = updater.pset;
     return this;
   }
 
@@ -219,7 +223,6 @@ export class Transaction implements TransactionInterface {
 
     updater.addOutputs([new CreatorOutput(this.network.assetHash, value)]);
 
-    this.pset = updater.pset;
     return this;
   }
 
@@ -341,9 +344,11 @@ export class Transaction implements TransactionInterface {
       const signedPtx = Pset.fromBase64(signedPtxBase64);
       this.pset = signedPtx;
 
+      // add witness stack elements from function arguments
       const { tapKeySig, tapScriptSig } = this.pset.inputs[
         this.fundingUtxoIndex
       ];
+      console.log(tapScriptSig, tapKeySig);
       if (tapScriptSig && tapScriptSig.length > 0) {
         for (const s of tapScriptSig) {
           witnessStack.push(s.signature);
@@ -354,8 +359,26 @@ export class Transaction implements TransactionInterface {
       }
     }
 
+    // finalize the transaction
     const finalizer = new Finalizer(this.pset);
-    finalizer.finalize();
+    finalizer.finalizeInput(this.fundingUtxoIndex, (index, pset: Pset) => {
+      const tapLeafScript = pset.inputs[index]
+        .tapLeafScript![0] as TapLeafScript;
+      return {
+        finalScriptSig: undefined,
+        finalScriptWitness: witnessStackToScriptWitness([
+          ...witnessStack.reverse(),
+          tapLeafScript.script,
+          tapLeafScript.controlBlock,
+        ]),
+      };
+    });
     return this;
+  }
+
+  toHex(): string {
+    const tx = Extractor.extract(this.pset);
+    const hex = tx.toHex();
+    return hex;
   }
 }

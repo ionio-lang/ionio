@@ -50,7 +50,7 @@ describe('SingleHopVault', () => {
         .withFeeOutput(fee);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+      const hex = signedTx.toHex();
       await expect(broadcast(hex, false)).rejects.toThrow();
     });
 
@@ -86,7 +86,7 @@ describe('SingleHopVault', () => {
         .withFeeOutput(fee);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+      const hex = signedTx.toHex();
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

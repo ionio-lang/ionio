@@ -52,7 +52,7 @@ describe('CheckSigFromStack', () => {
         .withFeeOutput(feeAmount)
         .unlock();
 
-      const hex = tx.psbt.extractTransaction().toHex();
+      const hex = tx.toHex();
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

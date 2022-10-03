@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { alicePk, network } from '../fixtures/vars';
-import { address, payments, TxOutput } from 'liquidjs-lib';
+import { payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex, getSignerWithECPair } from '../utils';
 import { Signer } from '../../src/Signer';
 import { Artifact } from '../../src/Artifact';
@@ -47,7 +47,7 @@ describe('TransferWithKey', () => {
   describe('transfer', () => {
     it('should transfer with signature', async () => {
       const to = payments.p2wpkh({ pubkey: alicePk.publicKey }).address!;
-      const toConfidential = address.toConfidential(to, alicePk.publicKey);
+      //const toConfidential = address.toConfidential(to, alicePk.publicKey);
       const amount = 9900;
       const feeAmount = 100;
 
@@ -61,11 +61,13 @@ describe('TransferWithKey', () => {
 
       const tx = instance.functions
         .transfer(signer)
-        .withRecipient(toConfidential, amount, network.assetHash)
+        .withRecipient(to, amount, network.assetHash)
         .withFeeOutput(feeAmount);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+      console.log(signedTx.pset.inputs, signedTx.pset.outputs);
+      const hex = signedTx.toHex();
+      console.log(hex);
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

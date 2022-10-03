@@ -33,8 +33,12 @@ describe('Calculator', () => {
         .withRecipient(to, amount, network.assetHash)
         .withFeeOutput(feeAmount);
 
+      console.log(tx.pset.inputs);
+
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+
+      const hex = signedTx.toHex();
+
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

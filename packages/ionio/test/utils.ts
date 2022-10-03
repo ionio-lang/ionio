@@ -3,13 +3,14 @@ import { ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import {
   confidential,
-  Psbt,
+  Pset,
   Transaction,
   TxOutput,
   NetworkExtended as Network,
   bip341,
 } from 'liquidjs-lib';
 import { Signer } from '../src/Signer';
+import { Signer as PsetSigner } from 'liquidjs-lib/src/psetv2';
 const APIURL = process.env.APIURL || 'http://localhost:3001';
 
 export function sleep(ms: number): Promise<any> {
@@ -165,10 +166,11 @@ export function getSignerWithECPair(
 ): Signer {
   return {
     signTransaction: async (base64: string): Promise<string> => {
-      const ptx = Psbt.fromBase64(base64);
+      const pset = Pset.fromBase64(base64);
+      const signer = new PsetSigner(pset);
 
-      for (let index = 0; index < ptx.data.inputs.length; index++) {
-        const input = ptx.data.inputs[index];
+      for (let index = 0; index < pset.inputs.length; index++) {
+        const input = pset.inputs[index];
         // skip if does not contain the tapLeafScript field
         if (input && !input.tapLeafScript) continue;
 
@@ -180,38 +182,42 @@ export function getSignerWithECPair(
           scriptHex: script.toString('hex'),
         });
 
-        // get the sig hash for each input
-        const sighashForSig = ptx.TX.hashForWitnessV1(
+        const hashType = input.sighashType || Transaction.SIGHASH_ALL;
+        const sighashForSig = pset.getInputPreimage(
           index,
-          ptx.data.inputs.map(u => u.witnessUtxo!.script),
-          ptx.data.inputs.map(u => ({
-            value: u.witnessUtxo!.value,
-            asset: u.witnessUtxo!.asset,
-          })),
-          Transaction.SIGHASH_DEFAULT,
+          hashType,
           network.genesisBlockHash,
           leafHash
         );
 
         // sign it
+        const hashTypeBuffer =
+          hashType !== 0x00 ? Buffer.of(hashType) : Buffer.alloc(0);
         // notice third parameted MUST have Buffer.alloc(32)
-        const sig = Buffer.from(
+        const signatureBuffer = Buffer.from(
           ecc.signSchnorr(sighashForSig, keyPair.privateKey!, Buffer.alloc(32))
         );
 
-        // attach signature in the taproot field
-        ptx.updateInput(index, {
-          tapScriptSig: [
+        const signatureWithHashType = Buffer.concat([
+          signatureBuffer,
+          hashTypeBuffer,
+        ]);
+
+        const taprootData = {
+          tapScriptSigs: [
             {
+              signature: signatureWithHashType,
+              pubkey: keyPair.publicKey.subarray(1),
               leafHash,
-              pubkey: keyPair.publicKey.slice(1),
-              signature: sig,
             },
           ],
-        });
+          genesisBlockHash: network.genesisBlockHash,
+        };
+
+        signer.addSignature(index, taprootData, Pset.SchnorrSigValidator(ecc));
       }
 
-      return ptx.toBase64();
+      return pset.toBase64();
     },
   };
 }
