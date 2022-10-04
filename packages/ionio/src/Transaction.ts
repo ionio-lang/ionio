@@ -6,9 +6,7 @@ import {
   NetworkExtended as Network,
   Pset,
   Creator,
-  CreatorInput,
   Updater,
-  CreatorOutput,
   PsetOutput,
   OwnedInput,
   Blinder,
@@ -74,7 +72,7 @@ export class Transaction implements TransactionInterface {
     private network: Network,
     private ecclib: bip341.TinySecp256k1Interface
   ) {
-    this.pset = Creator.newPset({});
+    this.pset = Creator.newPset();
 
     if (!this.fundingUtxo) return;
 
@@ -123,19 +121,19 @@ export class Transaction implements TransactionInterface {
 
     const updater = new Updater(this.pset);
     updater.addInputs([
-      new CreatorInput(this.fundingUtxo.txid, this.fundingUtxo.vout, sequence),
+      {
+        txid: this.fundingUtxo.txid,
+        txIndex: this.fundingUtxo.vout,
+        sequence,
+        witnessUtxo: this.fundingUtxo.prevout,
+        tapLeafScript: {
+          controlBlock,
+          leafVersion,
+          script: Buffer.from(leafToSpend.scriptHex, 'hex')
+        },
+        sighashType: LiquidTransaction.SIGHASH_ALL
+      }
     ]);
-    updater.addInWitnessUtxo(this.fundingUtxoIndex, this.fundingUtxo.prevout);
-    updater.addInTapLeafScript(this.fundingUtxoIndex, {
-      controlBlock,
-      leafVersion,
-      script: Buffer.from(leafToSpend.scriptHex, 'hex'),
-    });
-    updater.addInSighashType(
-      this.fundingUtxoIndex,
-      LiquidTransaction.SIGHASH_ALL
-    );
-
     // only add unblind data if the prevout of the input is confidential
     if (unblindDataFundingUtxo) {
       this.inputBlinders.push({
@@ -148,15 +146,15 @@ export class Transaction implements TransactionInterface {
   withUtxo(utxo: Output | UnblindedOutput): this {
     // instantiate Updater
     const updater = new Updater(this.pset);
-
     // add a new input
-    updater.addInputs([new CreatorInput(utxo.txid, utxo.vout)]);
+    updater.addInputs([{
+      txid: utxo.txid,
+      txIndex: utxo.vout,
+      witnessUtxo: utxo.prevout
+    }]);
 
     // get the index of last added input
     const index = this.pset.inputs.length - 1;
-
-    // add the prevout
-    updater.addInWitnessUtxo(index, utxo.prevout);
 
     // only add unblind data if the prevout of the input is confidential
     if (utxo && isUnblindedOutput(utxo) && isConfidentialOutput(utxo.prevout)) {
@@ -172,7 +170,8 @@ export class Transaction implements TransactionInterface {
   withRecipient(
     recipientAddress: string,
     value: number,
-    assetID: string = this.network.assetHash
+    assetID: string = this.network.assetHash,
+    blinderIndex: number = 0,
   ): this {
     const script = address.toOutputScript(recipientAddress);
     const blindingKey = address.isConfidential(recipientAddress)
@@ -185,7 +184,13 @@ export class Transaction implements TransactionInterface {
     // add a new outout.
     // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
     updater.addOutputs([
-      new CreatorOutput(assetID, value, script, blindingKey, 0),
+      {
+        script,
+        asset: assetID,
+        amount: value,
+        blinderIndex,
+        blindingPublicKey: blindingKey,
+      }
     ]);
 
     return this;
@@ -195,7 +200,8 @@ export class Transaction implements TransactionInterface {
     value: number = 0,
     assetID: string = this.network.assetHash,
     hexChunks: string[] = [],
-    blindingPublicKeyHex?: string
+    blindingPublicKeyHex?: string,
+    blinderIndex: number = 0,
   ): this {
     const opRetScript = script.compile([
       script.OPS.OP_RETURN,
@@ -211,7 +217,13 @@ export class Transaction implements TransactionInterface {
     // add a new outout.
     // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
     updater.addOutputs([
-      new CreatorOutput(assetID, value, opRetScript, blindingKey, 0),
+      {
+        script: opRetScript,
+        asset: assetID,
+        amount: value,
+        blinderIndex,
+        blindingPublicKey: blindingKey,
+      }
     ]);
 
     return this;
@@ -221,7 +233,10 @@ export class Transaction implements TransactionInterface {
     // instantiate Updater
     const updater = new Updater(this.pset);
 
-    updater.addOutputs([new CreatorOutput(this.network.assetHash, value)]);
+    updater.addOutputs([{
+      asset: this.network.assetHash,
+      amount: value,
+    }]);
 
     return this;
   }
@@ -361,6 +376,7 @@ export class Transaction implements TransactionInterface {
 
     // finalize the transaction
     const finalizer = new Finalizer(this.pset);
+
     finalizer.finalizeInput(this.fundingUtxoIndex, (index, pset: Pset) => {
       const tapLeafScript = pset.inputs[index]
         .tapLeafScript![0] as TapLeafScript;
