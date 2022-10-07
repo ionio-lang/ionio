@@ -323,10 +323,7 @@ export class Transaction implements TransactionInterface {
 
     // check for blinding to be made
     if (this.inputBlinders.length > 0) {
-      const needsBlinding = this.pset.outputs.some((o: PsetOutput) =>
-        o.needsBlinding()
-      );
-      if (!needsBlinding)
+      if (!this.pset.needsBlinding())
         throw new Error(
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
