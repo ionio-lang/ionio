@@ -129,10 +129,10 @@ export class Transaction implements TransactionInterface {
         tapLeafScript: {
           controlBlock,
           leafVersion,
-          script: Buffer.from(leafToSpend.scriptHex, 'hex')
+          script: Buffer.from(leafToSpend.scriptHex, 'hex'),
         },
-        sighashType: LiquidTransaction.SIGHASH_ALL
-      }
+        sighashType: LiquidTransaction.SIGHASH_DEFAULT,
+      },
     ]);
     // only add unblind data if the prevout of the input is confidential
     if (unblindDataFundingUtxo) {
@@ -147,11 +147,14 @@ export class Transaction implements TransactionInterface {
     // instantiate Updater
     const updater = new Updater(this.pset);
     // add a new input
-    updater.addInputs([{
-      txid: utxo.txid,
-      txIndex: utxo.vout,
-      witnessUtxo: utxo.prevout
-    }]);
+    updater.addInputs([
+      {
+        txid: utxo.txid,
+        txIndex: utxo.vout,
+        witnessUtxo: utxo.prevout,
+        sighashType: LiquidTransaction.SIGHASH_ALL
+      },
+    ]);
 
     // get the index of last added input
     const index = this.pset.inputs.length - 1;
@@ -171,7 +174,7 @@ export class Transaction implements TransactionInterface {
     recipientAddress: string,
     value: number,
     assetID: string = this.network.assetHash,
-    blinderIndex: number = 0,
+    blinderIndex: number = 0
   ): this {
     const script = address.toOutputScript(recipientAddress);
     const blindingKey = address.isConfidential(recipientAddress)
@@ -190,7 +193,7 @@ export class Transaction implements TransactionInterface {
         amount: value,
         blinderIndex,
         blindingPublicKey: blindingKey,
-      }
+      },
     ]);
 
     return this;
@@ -201,7 +204,7 @@ export class Transaction implements TransactionInterface {
     assetID: string = this.network.assetHash,
     hexChunks: string[] = [],
     blindingPublicKeyHex?: string,
-    blinderIndex: number = 0,
+    blinderIndex: number = 0
   ): this {
     const opRetScript = script.compile([
       script.OPS.OP_RETURN,
@@ -223,7 +226,7 @@ export class Transaction implements TransactionInterface {
         amount: value,
         blinderIndex,
         blindingPublicKey: blindingKey,
-      }
+      },
     ]);
 
     return this;
@@ -233,10 +236,12 @@ export class Transaction implements TransactionInterface {
     // instantiate Updater
     const updater = new Updater(this.pset);
 
-    updater.addOutputs([{
-      asset: this.network.assetHash,
-      amount: value,
-    }]);
+    updater.addOutputs([
+      {
+        asset: this.network.assetHash,
+        amount: value,
+      },
+    ]);
 
     return this;
   }
@@ -363,7 +368,6 @@ export class Transaction implements TransactionInterface {
       const { tapKeySig, tapScriptSig } = this.pset.inputs[
         this.fundingUtxoIndex
       ];
-      console.log(tapScriptSig, tapKeySig);
       if (tapScriptSig && tapScriptSig.length > 0) {
         for (const s of tapScriptSig) {
           witnessStack.push(s.signature);

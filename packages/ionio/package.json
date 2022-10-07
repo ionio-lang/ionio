@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "ldk": "^0.5.8",
-    "liquidjs-lib": "^6.0.2-liquid.13"
+    "liquidjs-lib": "^6.0.2-liquid.15"
   },
   "jest": {
     "testTimeout": 15000

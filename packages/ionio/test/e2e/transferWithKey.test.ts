@@ -65,9 +65,7 @@ describe('TransferWithKey', () => {
         .withFeeOutput(feeAmount);
 
       const signedTx = await tx.unlock();
-      console.log(signedTx.pset.inputs, signedTx.pset.outputs);
       const hex = signedTx.toHex();
-      console.log(hex);
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

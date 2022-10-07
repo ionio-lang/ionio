@@ -233,7 +233,7 @@ function signInput(pset: Pset, index: number, keyPair: ECPairInterface) {
   const signer = new PsetSigner(pset);
   // segwit v0 input
   const sigHashType =
-    pset.inputs[index].sighashType || LiquidTransaction.SIGHASH_ALL;
+    pset.inputs[index].sighashType ?? LiquidTransaction.SIGHASH_ALL;
   const preimage = pset.getInputPreimage(index, sigHashType);
 
   const partialSig: BIP174SigningData = {

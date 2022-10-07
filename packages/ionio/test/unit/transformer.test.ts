@@ -21,12 +21,10 @@ describe('transformArtifact', () => {
   it('should encode constructor input and asm tokens if Argument', () => {
     const artifact = replaceArtifactConstructorWithArguments(synth, [
       AssetHash.fromHex(
-        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
-        false
+        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225'
       ).hex,
       AssetHash.fromHex(
-        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
-        false
+        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225'
       ).hex,
       templateString('borrowAmount2'),
       templateString('payoutAmount2'),
@@ -43,8 +41,7 @@ describe('transformArtifact', () => {
     expect(artifact.functions[0].asm[4]).toEqual(
       encodeArgument(
         AssetHash.fromHex(
-          '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225',
-          false
+          '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225'
         ).hex,
         PrimitiveType.Asset
       ).toString('hex')

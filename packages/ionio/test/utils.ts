@@ -182,7 +182,7 @@ export function getSignerWithECPair(
           scriptHex: script.toString('hex'),
         });
 
-        const hashType = input.sighashType || Transaction.SIGHASH_ALL;
+        const hashType = input.sighashType ?? Transaction.SIGHASH_ALL;
         const sighashForSig = pset.getInputPreimage(
           index,
           hashType,

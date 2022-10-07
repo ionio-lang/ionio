@@ -4700,10 +4700,10 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-liquidjs-lib@^6.0.2-liquid.13:
-  version "6.0.2-liquid.13"
-  resolved "https://registry.yarnpkg.com/liquidjs-lib/-/liquidjs-lib-6.0.2-liquid.13.tgz#edfa6dc41ba2c4ca8fd20281ba52f1ff2cf6daba"
-  integrity sha512-kJAJjoCWyoZTMM8aYV7QhYgKCFg1CLXWCoNpDJxVyhDQTiM8RDR5CabFSu+vaslP0hsDXv84EbquvTOJd/cBVQ==
+liquidjs-lib@^6.0.2-liquid.15:
+  version "6.0.2-liquid.15"
+  resolved "https://registry.yarnpkg.com/liquidjs-lib/-/liquidjs-lib-6.0.2-liquid.15.tgz#54f377ceb79a4b46161dc665128ba9698c35c5f4"
+  integrity sha512-bbVUO911C0VTilzrUSsQ2trXYrHu3SaB3hX3DW4HjakxnWEKsnBQ2Lk7XGP0As3Ae6L1PUQC4lqT85drrHbVYQ==
   dependencies:
     "@types/randombytes" "^2.0.0"
     "@types/wif" "^2.0.2"
