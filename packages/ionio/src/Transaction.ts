@@ -7,6 +7,7 @@ import {
   Pset,
   Creator,
   Updater,
+
   OwnedInput,
   Blinder,
   Finalizer,
@@ -328,7 +329,6 @@ export class Transaction implements TransactionInterface {
 
       const zkpValidator = new ZKPValidator();
       const zkpGenerator = ZKPGenerator.fromOwnedInputs(this.inputBlinders);
-      const ownedInputs = await zkpGenerator.unblindInputs(this.pset);
       const outputBlindingArgs = await zkpGenerator.blindOutputs(
         this.pset,
         ZKPGenerator.ECCKeysGenerator(this.ecclib)
@@ -336,7 +336,7 @@ export class Transaction implements TransactionInterface {
 
       const blinder = new Blinder(
         this.pset,
-        ownedInputs,
+        this.inputBlinders,
         zkpValidator,
         zkpGenerator
       );
