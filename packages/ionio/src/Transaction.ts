@@ -7,7 +7,6 @@ import {
   Pset,
   Creator,
   Updater,
-
   OwnedInput,
   Blinder,
   Finalizer,
