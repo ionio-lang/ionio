@@ -152,7 +152,7 @@ export class Transaction implements TransactionInterface {
         txid: utxo.txid,
         txIndex: utxo.vout,
         witnessUtxo: utxo.prevout,
-        sighashType: LiquidTransaction.SIGHASH_ALL
+        sighashType: LiquidTransaction.SIGHASH_ALL,
       },
     ]);
 
