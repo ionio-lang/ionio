@@ -1,9 +1,23 @@
 import { Contract, Signer } from '../../src';
 import * as ecc from 'tiny-secp256k1';
+import { ECPairInterface } from 'ecpair';
 import { alicePk, bobPk, oraclePk, network } from '../fixtures/vars';
-import { payments, address, TxOutput } from 'ldk';
+import {
+  payments,
+  address,
+  script as bscript,
+  TxOutput,
+  Transaction as LiquidTransaction,
+  Finalizer,
+  Pset,
+} from 'liquidjs-lib';
 import crypto from 'crypto';
-import { writeUInt64LE } from 'liquidjs-lib/ts_src/bufferutils';
+import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
+import {
+  BIP174SigningData,
+  Extractor,
+  Signer as PsetSigner,
+} from 'liquidjs-lib/src/psetv2';
 import {
   broadcast,
   faucetComplex,
@@ -143,10 +157,15 @@ describe('SyntheticAsset', () => {
 
     const partialSignedTx = await tx.unlock();
 
-    const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
-    const finalizedTx = await signedTx.finalizeInput(1);
+    //const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
+    const signedPset = signInput(partialSignedTx.pset, 1, bobPk);
 
-    const hex = finalizedTx.extractTransaction().toHex();
+    const finalizer = new Finalizer(signedPset);
+    finalizer.finalize();
+
+    const finalTx = Extractor.extract(signedPset);
+    const hex = finalTx.toHex();
+
     const txid = await broadcast(hex);
     expect(txid).toBeDefined();
   });
@@ -196,11 +215,34 @@ describe('SyntheticAsset', () => {
     const partialSignedTx = await tx.unlock();
 
     // sign and finalize the synth asset input
-    const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
-    const finalizedTx = await signedTx.finalizeInput(1);
+    //const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
+    const signedPset = signInput(partialSignedTx.pset, 1, bobPk);
 
-    const hex = finalizedTx.extractTransaction().toHex();
+    const finalizer = new Finalizer(signedPset);
+    finalizer.finalize();
+
+    const finalTx = Extractor.extract(signedPset);
+    const hex = finalTx.toHex();
+
     const txid = await broadcast(hex);
     expect(txid).toBeDefined();
   });
 });
+
+function signInput(pset: Pset, index: number, keyPair: ECPairInterface) {
+  const signer = new PsetSigner(pset);
+  // segwit v0 input
+  const sigHashType =
+    pset.inputs[index].sighashType ?? LiquidTransaction.SIGHASH_ALL;
+  const preimage = pset.getInputPreimage(index, sigHashType);
+
+  const partialSig: BIP174SigningData = {
+    partialSig: {
+      pubkey: keyPair.publicKey,
+      signature: bscript.signature.encode(keyPair.sign(preimage), sigHashType),
+    },
+  };
+  signer.addSignature(index, partialSig, Pset.ECDSASigValidator(ecc));
+
+  return pset;
+}

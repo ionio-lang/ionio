@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { alicePk, network } from '../fixtures/vars';
-import { address, payments, TxOutput } from 'ldk';
+import { address, payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex } from '../utils';
 import { Artifact } from '../../src/Artifact';
 
@@ -50,7 +50,7 @@ describe('SingleHopVault', () => {
         .withFeeOutput(fee);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+      const hex = signedTx.toHex();
       await expect(broadcast(hex, false)).rejects.toThrow();
     });
 
@@ -86,7 +86,7 @@ describe('SingleHopVault', () => {
         .withFeeOutput(fee);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+      const hex = signedTx.toHex();
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });

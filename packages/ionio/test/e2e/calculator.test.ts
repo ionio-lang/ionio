@@ -1,7 +1,7 @@
 import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
 import { bob, network } from '../fixtures/vars';
-import { payments, TxOutput } from 'ldk';
+import { payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex } from '../utils';
 
 describe('Calculator', () => {
@@ -34,7 +34,9 @@ describe('Calculator', () => {
         .withFeeOutput(feeAmount);
 
       const signedTx = await tx.unlock();
-      const hex = signedTx.psbt.extractTransaction().toHex();
+
+      const hex = signedTx.toHex();
+
       const txid = await broadcast(hex);
       expect(txid).toBeDefined();
     });
