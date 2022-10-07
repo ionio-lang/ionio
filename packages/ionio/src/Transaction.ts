@@ -185,7 +185,6 @@ export class Transaction implements TransactionInterface {
     const updater = new Updater(this.pset);
 
     // add a new outout.
-    // TODO Check if we should assume the contract owner also shoudl blind all outputs added via withRecipient?
     updater.addOutputs([
       {
         script,
