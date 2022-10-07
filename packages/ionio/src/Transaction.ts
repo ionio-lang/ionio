@@ -57,7 +57,7 @@ export class Transaction implements TransactionInterface {
   public pset: Pset;
 
   private fundingUtxoIndex: number = 0;
-  private inputBlinders: OwnedInput[] = [] as any;
+  private unblindedInputs: OwnedInput[] = [] as any;
 
   constructor(
     private constructorInputs: Parameter[],
@@ -135,7 +135,7 @@ export class Transaction implements TransactionInterface {
     ]);
     // only add unblind data if the prevout of the input is confidential
     if (unblindDataFundingUtxo) {
-      this.inputBlinders.push({
+      this.unblindedInputs.push({
         index: this.fundingUtxoIndex,
         ...unblindDataFundingUtxo,
       });
@@ -160,7 +160,7 @@ export class Transaction implements TransactionInterface {
 
     // only add unblind data if the prevout of the input is confidential
     if (utxo && isUnblindedOutput(utxo) && isConfidentialOutput(utxo.prevout)) {
-      this.inputBlinders.push({
+      this.unblindedInputs.push({
         index,
         ...utxo.unblindData,
       });
@@ -320,14 +320,14 @@ export class Transaction implements TransactionInterface {
     }
 
     // check for blinding to be made
-    if (this.inputBlinders.length > 0) {
+    if (this.unblindedInputs.length > 0) {
       if (!this.pset.needsBlinding())
         throw new Error(
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
 
       const zkpValidator = new ZKPValidator();
-      const zkpGenerator = ZKPGenerator.fromOwnedInputs(this.inputBlinders);
+      const zkpGenerator = ZKPGenerator.fromOwnedInputs(this.unblindedInputs);
       const outputBlindingArgs = await zkpGenerator.blindOutputs(
         this.pset,
         ZKPGenerator.ECCKeysGenerator(this.ecclib)
@@ -335,7 +335,7 @@ export class Transaction implements TransactionInterface {
 
       const blinder = new Blinder(
         this.pset,
-        this.inputBlinders,
+        this.unblindedInputs,
         zkpValidator,
         zkpGenerator
       );
