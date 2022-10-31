@@ -13,7 +13,7 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build --format cjs,esm,umd --name ionio",
-    "test": "tsdx test",
+    "test": "tsdx test --runInBand",
     "lint": "tsdx lint",
     "prepare": "tsdx build --format cjs,esm,umd --name ionio",
     "size": "size-limit",
@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "ldk": "^0.5.8",
-    "liquidjs-lib": "^6.0.2-liquid.15"
+    "liquidjs-lib": "^6.0.2-liquid.17"
   },
   "jest": {
     "testTimeout": 15000
