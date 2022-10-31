@@ -331,7 +331,7 @@ export class Transaction implements TransactionInterface {
       const zkpLib = await secp256k1();
       const zkpGenerator = new ZKPGenerator(
         zkpLib,
-        ZKPGenerator.WithOwnedInputs(this.unblindedInputs),
+        ZKPGenerator.WithOwnedInputs(this.unblindedInputs)
       );
       const zkpValidator = new ZKPValidator(zkpLib);
       const outputBlindingArgs = zkpGenerator.blindOutputs(

@@ -35,10 +35,7 @@ export async function faucetComplex(
   if (blindingKey) {
     const zkp = await secp256k1();
     const conf = new confidential.Confidential(zkp);
-    const unblindData = conf.unblindOutputWithKey(
-      prevout,
-      blindingKey
-    );
+    const unblindData = conf.unblindOutputWithKey(prevout, blindingKey);
     return { utxo, prevout, unblindData };
   }
 
