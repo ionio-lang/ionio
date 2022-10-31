@@ -3,12 +3,13 @@ import { ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import {
   confidential,
+  networks,
   Pset,
   Transaction,
   TxOutput,
-  NetworkExtended as Network,
   bip341,
 } from 'liquidjs-lib';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
 import { Signer } from '../src/Signer';
 import { Signer as PsetSigner } from 'liquidjs-lib/src/psetv2';
 const APIURL = process.env.APIURL || 'http://localhost:3001';
@@ -32,7 +33,9 @@ export async function faucetComplex(
   const prevout = Transaction.fromHex(txhex).outs[utxo.vout];
 
   if (blindingKey) {
-    const unblindData = await confidential.unblindOutputWithKey(
+    const zkp = await secp256k1();
+    const conf = new confidential.Confidential(zkp);
+    const unblindData = conf.unblindOutputWithKey(
       prevout,
       blindingKey
     );
@@ -162,7 +165,7 @@ export async function broadcast(
 
 export function getSignerWithECPair(
   keyPair: ECPairInterface,
-  network: Network
+  network: networks.Network
 ): Signer {
   return {
     signTransaction: async (base64: string): Promise<string> => {

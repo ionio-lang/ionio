@@ -1,9 +1,9 @@
 import {
   address,
-  confidential,
   script,
   bip341,
-  NetworkExtended as Network,
+  networks,
+  confidential,
   Pset,
   Creator,
   Updater,
@@ -13,6 +13,8 @@ import {
   Extractor,
   Transaction as LiquidTransaction,
   witnessStackToScriptWitness,
+  ZKPGenerator,
+  ZKPValidator,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -27,8 +29,8 @@ import {
   UnblindedOutput,
   isConfidentialOutput,
 } from 'ldk';
-import { ZKPGenerator, ZKPValidator } from 'liquidjs-lib/src/confidential';
 import { TapLeafScript } from 'liquidjs-lib/src/psetv2/interfaces';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 export interface TransactionInterface {
   pset: Pset;
@@ -68,7 +70,7 @@ export class Transaction implements TransactionInterface {
     private fundingUtxo: Output | UnblindedOutput | undefined,
     unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined,
     private taprootData: TaprootData,
-    private network: Network,
+    private network: networks.Network,
     private ecclib: bip341.TinySecp256k1Interface
   ) {
     this.pset = Creator.newPset();
@@ -326,11 +328,15 @@ export class Transaction implements TransactionInterface {
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
 
-      const zkpValidator = new ZKPValidator();
-      const zkpGenerator = ZKPGenerator.fromOwnedInputs(this.unblindedInputs);
-      const outputBlindingArgs = await zkpGenerator.blindOutputs(
+      const zkpLib = await secp256k1();
+      const zkpGenerator = new ZKPGenerator(
+        zkpLib,
+        ZKPGenerator.WithOwnedInputs(this.unblindedInputs),
+      );
+      const zkpValidator = new ZKPValidator(zkpLib);
+      const outputBlindingArgs = zkpGenerator.blindOutputs(
         this.pset,
-        ZKPGenerator.ECCKeysGenerator(this.ecclib)
+        Pset.ECCKeysGenerator(this.ecclib)
       );
 
       const blinder = new Blinder(
@@ -340,7 +346,7 @@ export class Transaction implements TransactionInterface {
         zkpGenerator
       );
 
-      await blinder.blindLast({ outputBlindingArgs });
+      blinder.blindLast({ outputBlindingArgs });
     }
 
     // check for a signature to be made

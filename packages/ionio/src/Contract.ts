@@ -4,9 +4,9 @@ import { Artifact, ArtifactFunction, validateArtifact } from './Artifact';
 import {
   address,
   script,
+  networks,
   TxOutput,
   bip341,
-  NetworkExtended as Network,
   confidential,
 } from 'liquidjs-lib';
 import { H_POINT } from './constants';
@@ -50,7 +50,7 @@ export class Contract implements ContractInterface {
   constructor(
     private artifact: Artifact,
     private constructorArgs: Argument[],
-    private network: Network,
+    private network: networks.Network,
     private ecclib: bip341.TinySecp256k1Interface
   ) {
     validateArtifact(artifact, constructorArgs);
