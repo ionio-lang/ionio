@@ -1,5 +1,7 @@
-import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
+
+import { Contract } from '../../src';
 import { alicePk, network } from '../fixtures/vars';
 import { address, payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex } from '../utils';
@@ -23,13 +25,14 @@ describe('SingleHopVault', () => {
     .address!;
 
   beforeEach(async () => {
+    const zkp = await secp256k1();
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/single_hop_vault.json');
     contract = new Contract(
       artifact,
       [coldScriptProgram, hotScriptProgram, sats - fee, network.assetHash, 2],
       network,
-      ecc
+      { ecc, zkp }
     );
     const response = await faucetComplex(contract.address, sats / 10 ** 8);
 

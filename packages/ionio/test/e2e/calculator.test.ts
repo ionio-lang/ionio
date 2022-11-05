@@ -1,5 +1,7 @@
-import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
+
+import { Contract } from '../../src';
 import { bob, network } from '../fixtures/vars';
 import { payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex } from '../utils';
@@ -10,9 +12,10 @@ describe('Calculator', () => {
   let utxo: { txid: string; vout: number; value: number; asset: string };
 
   beforeAll(async () => {
+    const zkp = await secp256k1();
     // eslint-disable-next-line global-require
     const artifact = require('../fixtures/calculator.json');
-    contract = new Contract(artifact, [3], network, ecc);
+    contract = new Contract(artifact, [3], network, { ecc, zkp });
     const response = await faucetComplex(contract.address, 0.0001);
 
     prevout = response.prevout;
