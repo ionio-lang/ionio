@@ -46,6 +46,7 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
+    "@vulpemventures/secp256k1-zkp": "^2.1.1",
     "axios": "^0.27.2",
     "bip32": "^3.0.1",
     "husky": "^8.0.1",
@@ -58,7 +59,7 @@
   },
   "dependencies": {
     "ldk": "^0.5.8",
-    "liquidjs-lib": "^6.0.2-liquid.18"
+    "liquidjs-lib": "^6.0.2-liquid.19"
   },
   "jest": {
     "testTimeout": 15000
