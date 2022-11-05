@@ -15,6 +15,7 @@ import {
   witnessStackToScriptWitness,
   ZKPGenerator,
   ZKPValidator,
+  TapLeafScript,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -29,8 +30,6 @@ import {
   UnblindedOutput,
   isConfidentialOutput,
 } from 'ldk';
-import { TapLeafScript } from 'liquidjs-lib/src/psetv2/interfaces';
-import { ZKPInterface } from 'liquidjs-lib/src/confidential';
 
 export interface TransactionInterface {
   pset: Pset;
@@ -72,7 +71,7 @@ export class Transaction implements TransactionInterface {
     private taprootData: TaprootData,
     private network: networks.Network,
     private ecclib: bip341.TinySecp256k1Interface,
-    private zkplib: ZKPInterface
+    private zkplib: confidential.ZKPInterface,
   ) {
     this.pset = Creator.newPset();
 
