@@ -71,7 +71,7 @@ export class Transaction implements TransactionInterface {
     private taprootData: TaprootData,
     private network: networks.Network,
     private ecclib: bip341.TinySecp256k1Interface,
-    private zkplib: confidential.ZKPInterface,
+    private zkplib: confidential.ZKPInterface
   ) {
     this.pset = Creator.newPset();
 
