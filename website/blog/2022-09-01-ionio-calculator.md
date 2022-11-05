@@ -140,12 +140,14 @@ yarn add liquidjs-lib-taproot
 4. Add script section on top
 
 ```ts
-<script type="ts">
+<script type="ts" async>
   import { Artifact, Contract } from '@ionio-lang/ionio';
   import { networks, address, confidential, AssetHash } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './calculator.json';
 
+  // instantiate the secp256-zkp wasm library
+  const zkp = await secp256k1();
   // define the network we going to work
   const network = networks.regtest;
   // create empty state
@@ -164,8 +166,8 @@ yarn add liquidjs-lib-taproot
     [3], 
     // network for address encoding
     network, 
-    // injectable secp256k1 library 
-    ecc 
+    // injectable secp256k1 libraries 
+    { ecc, zkp } 
   );
   const contractAddress = contract.address;
 </script>
