@@ -1,5 +1,7 @@
-import { Contract } from '../../src';
 import * as ecc from 'tiny-secp256k1';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
+
+import { Contract } from '../../src';
 import { alicePk, network } from '../fixtures/vars';
 import { payments, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex, getSignerWithECPair } from '../utils';
@@ -14,13 +16,17 @@ describe('TransferWithKey', () => {
   const signer: Signer = getSignerWithECPair(alicePk, network);
 
   beforeAll(async () => {
+    const zkp = await secp256k1();
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/transfer_with_key.json');
     contract = new Contract(
       artifact,
       [`0x${alicePk.publicKey.slice(1).toString('hex')}`],
       network,
-      ecc
+      {
+        ecc,
+        zkp,
+      }
     );
 
     /**

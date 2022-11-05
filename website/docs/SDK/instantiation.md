@@ -18,7 +18,7 @@ new Contract(
 )
 ```
 
-A Ionio contract can be instantiated by providing an `Artifact` object, the list of hardcoded arguments `Argument[]`, a `Network` and a `TinySecp256k1Interface`.
+A Ionio contract can be instantiated by providing an `Artifact` object, the list of hardcoded arguments `Argument[]`, a `Network`, a `TinySecp256k1Interface` and a `ZKPInterface`
 
 An `Artifact` object is the result of compiling a Ionio contract with Ionio compiler. Compilation ~~can~~ will be done using the standalone `ionioc` CLI or programmatically with the `ionioc` NPM package.
 
@@ -27,7 +27,9 @@ An `Artifact` object is the result of compiling a Ionio contract with Ionio comp
 ```ts
 import { Contract, networks } from '@ionio-lang/ionio';
 import * as ecc from 'tiny-secp256k1';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
+const zkp = await secp256k1();
 
 const artifact = {
   "contractName": "Calculator",
@@ -61,7 +63,7 @@ const artifact = {
 };
 
 
-const contract = new Contract(artifact, [3], networks.regtest, ecc);
+const contract = new Contract(artifact, [3], networks.regtest, { ecc, zkp });
 ```
 
 ### address
@@ -100,12 +102,14 @@ These contract functions return an incomplete `Transaction` object, which needs 
 #### Example
 ```ts
 import * as ecc from 'tiny-secp256k1';
+import secp256k1 from '@vulpemventures/secp256k1-zkp';
 import { Contract, networks } from '@ionio-lang/ionio';
 import { artifact, myself, to, amount, fundingUtxo, prevout, broadcast } from './somewhere';
+const zkp = await secp256k1();
 
 const feeAmount = 100;
 
-const contract = new Contract(artifact, [3], networks.regtest, ecc);
+const contract = new Contract(artifact, [3], networks.regtest, { ecc, zkp });
 
 // attach to the funded contract using the utxo
 const instance = contract.from(

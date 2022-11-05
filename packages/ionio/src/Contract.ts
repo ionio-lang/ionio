@@ -15,6 +15,7 @@ import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
 import { checkRequirements } from './Requirement';
 import { Output, UnblindedOutput } from 'ldk';
+import { ZKPInterface } from 'liquidjs-lib/src/confidential';
 
 export interface ContractInterface {
   name: string;
@@ -51,7 +52,10 @@ export class Contract implements ContractInterface {
     private artifact: Artifact,
     private constructorArgs: Argument[],
     private network: networks.Network,
-    private ecclib: bip341.TinySecp256k1Interface
+    private secp256libs: {
+      ecc: bip341.TinySecp256k1Interface;
+      zkp: ZKPInterface;
+    }
   ) {
     validateArtifact(artifact, constructorArgs);
 
@@ -85,7 +89,7 @@ export class Contract implements ContractInterface {
     // name
     this.name = artifact.contractName;
 
-    const bip341API = bip341.BIP341Factory(this.ecclib);
+    const bip341API = bip341.BIP341Factory(this.secp256libs.ecc);
     const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & addressl
@@ -93,7 +97,11 @@ export class Contract implements ContractInterface {
     this.address = address.fromOutputScript(this.scriptPubKey, this.network);
 
     // parity bit
-    const { parity } = tweakPublicKey(H_POINT, hashTree.hash, this.ecclib);
+    const { parity } = tweakPublicKey(
+      H_POINT,
+      hashTree.hash,
+      this.secp256libs.ecc
+    );
     this.parity = parity;
     // TODO add bytesize calculation
     //this.bytesize = calculateBytesize(this.leaves);
@@ -162,7 +170,8 @@ export class Contract implements ContractInterface {
           parity: this.parity,
         },
         this.network,
-        this.ecclib
+        this.secp256libs.ecc,
+        this.secp256libs.zkp
       );
     };
   }

@@ -15,6 +15,7 @@ import {
   witnessStackToScriptWitness,
   ZKPGenerator,
   ZKPValidator,
+  TapLeafScript,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -29,8 +30,6 @@ import {
   UnblindedOutput,
   isConfidentialOutput,
 } from 'ldk';
-import { TapLeafScript } from 'liquidjs-lib/src/psetv2/interfaces';
-import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 export interface TransactionInterface {
   pset: Pset;
@@ -71,7 +70,8 @@ export class Transaction implements TransactionInterface {
     unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined,
     private taprootData: TaprootData,
     private network: networks.Network,
-    private ecclib: bip341.TinySecp256k1Interface
+    private ecclib: bip341.TinySecp256k1Interface,
+    private zkplib: confidential.ZKPInterface
   ) {
     this.pset = Creator.newPset();
 
@@ -328,12 +328,11 @@ export class Transaction implements TransactionInterface {
           'if one confidential input is spent, at least one of the outputs must be blinded'
         );
 
-      const zkpLib = await secp256k1();
       const zkpGenerator = new ZKPGenerator(
-        zkpLib,
+        this.zkplib,
         ZKPGenerator.WithOwnedInputs(this.unblindedInputs)
       );
-      const zkpValidator = new ZKPValidator(zkpLib);
+      const zkpValidator = new ZKPValidator(this.zkplib);
       const outputBlindingArgs = zkpGenerator.blindOutputs(
         this.pset,
         Pset.ECCKeysGenerator(this.ecclib)
