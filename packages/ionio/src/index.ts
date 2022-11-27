@@ -7,3 +7,4 @@ export * from './Requirement';
 export * from './Transaction';
 export * from './constants';
 export * from './descriptor';
+export * from './types';

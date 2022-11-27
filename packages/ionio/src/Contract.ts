@@ -14,7 +14,7 @@ import { tweakPublicKey } from './utils/taproot';
 import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
 import { checkRequirements } from './Requirement';
-import { Output, UnblindedOutput } from 'ldk';
+import { Output, UnblindedOutput } from './types';
 import { ZKPInterface } from 'liquidjs-lib/src/confidential';
 
 export interface ContractInterface {
