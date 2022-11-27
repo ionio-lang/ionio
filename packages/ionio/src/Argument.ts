@@ -1,6 +1,5 @@
-import { script } from 'liquidjs-lib';
+import { ElementsValue, script } from 'liquidjs-lib';
 import { isSigner, Signer } from './Signer';
-import { Value } from './utils/value';
 
 export type Argument = number | boolean | string | Buffer | Signer;
 
@@ -82,7 +81,7 @@ export function encodeArgument(
       if (typeof value !== 'number') {
         throw new TypeError(typeof value, typeStr);
       }
-      const valueBuffer = Value.fromSatoshis(value).bytes;
+      const valueBuffer = ElementsValue.fromNumber(value).bytes;
       const reversedValueBuffer = valueBuffer.slice(1).reverse() as Buffer;
       return reversedValueBuffer;
 

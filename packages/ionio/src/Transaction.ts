@@ -24,12 +24,8 @@ import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
 import { RequiredOutput, RequirementType, ScriptPubKey } from './Requirement';
 import { replaceTemplateWithConstructorArg } from './utils/template';
-import {
-  isUnblindedOutput,
-  Output,
-  UnblindedOutput,
-  isConfidentialOutput,
-} from 'ldk';
+import { Output, UnblindedOutput } from './types';
+import { isConfidentialOutput, isUnblindedOutput } from './utils/confidential';
 
 export interface TransactionInterface {
   pset: Pset;
