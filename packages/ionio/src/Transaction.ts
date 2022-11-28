@@ -171,7 +171,7 @@ export class Transaction implements TransactionInterface {
     recipientAddress: string,
     value: number,
     assetID: string = this.network.assetHash,
-    blinderIndex: number = 0
+    blinderIndex: number | undefined = undefined
   ): this {
     const script = address.toOutputScript(recipientAddress);
     const blindingKey = address.isConfidential(recipientAddress)
