@@ -52,9 +52,9 @@ export interface TaprootData {
 
 export class Transaction implements TransactionInterface {
   public pset: Pset;
+  public unblindedInputs: OwnedInput[] = [] as any;
 
   private fundingUtxoIndex: number = 0;
-  private unblindedInputs: OwnedInput[] = [] as any;
 
   constructor(
     private constructorInputs: Parameter[],

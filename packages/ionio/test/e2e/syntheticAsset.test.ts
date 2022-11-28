@@ -1,7 +1,7 @@
 import * as ecc from 'tiny-secp256k1';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
-import { Contract, Signer } from '../../src';
+import { Artifact, Contract, Signer } from '../../src';
 import { ECPairInterface } from 'ecpair';
 import { alicePk, bobPk, oraclePk, network } from '../fixtures/vars';
 import {
@@ -17,8 +17,11 @@ import crypto from 'crypto';
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
 import {
   BIP174SigningData,
+  Blinder,
   Extractor,
   Signer as PsetSigner,
+  ZKPGenerator,
+  ZKPValidator,
 } from 'liquidjs-lib/src/psetv2';
 import {
   broadcast,
@@ -34,11 +37,13 @@ const numberToBytesLE64 = (x: number): Buffer => {
   return buffer;
 };
 
+const artifact = require('../fixtures/synthetic_asset.json');
+
 describe('SyntheticAsset', () => {
   const issuer = payments.p2wpkh({ pubkey: alicePk.publicKey, network })!;
   const issuerSigner: Signer = getSignerWithECPair(alicePk, network);
 
-  const borrower = payments.p2wpkh({ pubkey: bobPk.publicKey, network })!;
+  const borrower = payments.p2wpkh({ pubkey: bobPk.publicKey, network, blindkey: bobPk.publicKey })!;
   const borrowerSigner: Signer = getSignerWithECPair(bobPk, network);
 
   let contract: Contract;
@@ -86,22 +91,14 @@ describe('SyntheticAsset', () => {
   beforeEach(async () => {
     try {
       const zkp = await secp256k1();
-      const artifact = require('../fixtures/synthetic_asset.json');
       contract = new Contract(
         artifact,
         [
-          // borrow asset
           synthMintUtxo.asset,
-          // collateral asset
-          network.assetHash,
-          // borrow amount
           borrowAmount,
-          // payout on redeem amount for issuer
-          payoutAmount,
           borrower.pubkey!.slice(1),
           oraclePk.publicKey.slice(1),
           issuer.pubkey!.slice(1),
-          issuer.output!.slice(2), // segwit program
           priceLevelBytes,
           timestampBytes,
         ],
@@ -137,7 +134,7 @@ describe('SyntheticAsset', () => {
     );
   });
 
-  it('should redeem with burnt output', async () => {
+  it.only('should redeem with burnt output', async () => {
     const tx = instance.functions
       .redeem(borrowerSigner)
       // spend an asset
@@ -158,6 +155,7 @@ describe('SyntheticAsset', () => {
       )
       .withFeeOutput(feeAmount);
 
+
     const partialSignedTx = await tx.unlock();
 
     //const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
@@ -171,6 +169,90 @@ describe('SyntheticAsset', () => {
 
     const txid = await broadcast(hex);
     expect(txid).toBeDefined();
+  });
+
+  it('should topup burning & reissuing', async () => {
+    const newCollateralCoinAmount = 500000;
+    const newCollateralCoin = await faucetComplex(
+      borrower.confidentialAddress!,
+      newCollateralCoinAmount,
+      network.assetHash,
+      bobPk.privateKey
+    );
+    const newCollateralAmount = 250000;
+    const newPriceLevel = priceLevel * 5;
+    const newTimestamp = 1669599853; // Mon Nov 28 01:44:13 2022 UTC
+
+    const zkp = await secp256k1();
+    const newContract = new Contract(
+      artifact as Artifact,
+      [
+        synthMintUtxo.asset,
+        borrowAmount,
+        borrower.pubkey!.slice(1),
+        oraclePk.publicKey.slice(1),
+        issuer.pubkey!.slice(1),
+        numberToBytesLE64(newPriceLevel),
+        numberToBytesLE64(newTimestamp)
+      ],
+      network,
+      {
+        ecc,
+        zkp,
+      }
+    );
+
+    console.log(instance.fundingUtxo?.prevout)
+
+    const tx = instance.functions
+      .redeem(borrowerSigner)
+      // spend an asset
+      .withUtxo({
+        txid: borrowUtxo.txid,
+        vout: borrowUtxo.vout,
+        prevout: borrowPrevout,
+      })
+      // add more collateral
+      .withUtxo({
+        txid: newCollateralCoin.utxo.txid,
+        vout: newCollateralCoin.utxo.vout,
+        prevout: newCollateralCoin.prevout,
+        unblindData: newCollateralCoin.unblindData
+      })
+      // burn asset
+      .withOpReturn(borrowUtxo.value, borrowUtxo.asset)
+      // new contract with more collateral 
+      .withRecipient(newContract.address, newCollateralAmount, network.assetHash)
+      // utxo collateral change. We use the second input as blinder index
+      .withRecipient(
+        borrower.confidentialAddress!,
+        newCollateralCoinAmount - newCollateralAmount - feeAmount,
+        network.assetHash,
+        2
+      );
+
+      const zkpValidator = new ZKPValidator(zkp);
+      const zkpGenerator = new ZKPGenerator(
+        zkp,
+        ZKPGenerator.WithOwnedInputs(tx.unblindedInputs)
+      );
+      const outputBlindingArgs = zkpGenerator.blindOutputs(
+        tx.pset,
+        Pset.ECCKeysGenerator(ecc)
+      );
+      const blinder = new Blinder(
+        tx.pset,
+        tx.unblindedInputs,
+        zkpValidator,
+        zkpGenerator
+      );
+      blinder.blindLast({
+        outputBlindingArgs,
+      });
+
+      console.log('blinded');
+
+
   });
 
   it('should liquidate with oracle attestation', async () => {
