@@ -134,7 +134,7 @@ describe('SyntheticAsset', () => {
     );
   });
 
-  it.only('should redeem with burnt output', async () => {
+  it('should redeem with burnt output', async () => {
     const tx = instance.functions
       .redeem(borrowerSigner)
       // spend an asset
@@ -171,7 +171,7 @@ describe('SyntheticAsset', () => {
     expect(txid).toBeDefined();
   });
 
-  it('should topup burning & reissuing', async () => {
+  it.only('should topup burning & reissuing', async () => {
     const newCollateralCoinAmount = 500000;
     const newCollateralCoin = await faucetComplex(
       borrower.confidentialAddress!,
