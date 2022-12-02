@@ -17,11 +17,8 @@ import crypto from 'crypto';
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
 import {
   BIP174SigningData,
-  Blinder,
   Extractor,
   Signer as PsetSigner,
-  ZKPGenerator,
-  ZKPValidator,
 } from 'liquidjs-lib/src/psetv2';
 import {
   broadcast,
@@ -43,7 +40,11 @@ describe('SyntheticAsset', () => {
   const issuer = payments.p2wpkh({ pubkey: alicePk.publicKey, network })!;
   const issuerSigner: Signer = getSignerWithECPair(alicePk, network);
 
-  const borrower = payments.p2wpkh({ pubkey: bobPk.publicKey, network, blindkey: bobPk.publicKey })!;
+  const borrower = payments.p2wpkh({
+    pubkey: bobPk.publicKey,
+    network,
+    blindkey: bobPk.publicKey,
+  })!;
   const borrowerSigner: Signer = getSignerWithECPair(bobPk, network);
 
   let contract: Contract;
@@ -64,8 +65,8 @@ describe('SyntheticAsset', () => {
   };
   let instance: Contract;
   const borrowAmount = 500000;
-  const payoutAmount = 500;
-  const feeAmount = 100;
+  const collateralAmount = 100000;
+  const feeAmount = 500;
 
   // 40k BTCUSD
   const priceLevel = 40000;
@@ -121,7 +122,7 @@ describe('SyntheticAsset', () => {
     // 2. fund our contract with collateral
     const faucetCollateralResponse = await faucetComplex(
       contract.address,
-      0.0001
+      collateralAmount / 10 ** 8
     );
     covenantPrevout = faucetCollateralResponse.prevout;
     covenantUtxo = faucetCollateralResponse.utxo;
@@ -145,16 +146,13 @@ describe('SyntheticAsset', () => {
       })
       // burn asset
       .withOpReturn(borrowUtxo.value, borrowUtxo.asset)
-      // payout to issuer
-      .withRecipient(issuer.address!, payoutAmount, network.assetHash)
       // collateral
       .withRecipient(
         borrower.address!,
-        covenantUtxo.value - payoutAmount - feeAmount,
+        collateralAmount - feeAmount,
         network.assetHash
       )
       .withFeeOutput(feeAmount);
-
 
     const partialSignedTx = await tx.unlock();
 
@@ -171,16 +169,16 @@ describe('SyntheticAsset', () => {
     expect(txid).toBeDefined();
   });
 
-  it.only('should topup burning & reissuing', async () => {
-    const newCollateralCoinAmount = 500000;
+  it('should topup burning & reissuing', async () => {
+    const newCollateralCoinAmount = 300000;
     const newCollateralCoin = await faucetComplex(
       borrower.confidentialAddress!,
-      newCollateralCoinAmount,
+      newCollateralCoinAmount / 10 ** 8,
       network.assetHash,
       bobPk.privateKey
     );
-    const newCollateralAmount = 250000;
-    const newPriceLevel = priceLevel * 5;
+    const newCollateralAmount = 200000;
+    const newPriceLevel = priceLevel * 2;
     const newTimestamp = 1669599853; // Mon Nov 28 01:44:13 2022 UTC
 
     const zkp = await secp256k1();
@@ -193,7 +191,7 @@ describe('SyntheticAsset', () => {
         oraclePk.publicKey.slice(1),
         issuer.pubkey!.slice(1),
         numberToBytesLE64(newPriceLevel),
-        numberToBytesLE64(newTimestamp)
+        numberToBytesLE64(newTimestamp),
       ],
       network,
       {
@@ -202,57 +200,56 @@ describe('SyntheticAsset', () => {
       }
     );
 
-    console.log(instance.fundingUtxo?.prevout)
-
     const tx = instance.functions
-      .redeem(borrowerSigner)
-      // spend an asset
+      .redeem(borrowerSigner) // 100k btc
+      // spend an asset 500k synth
       .withUtxo({
         txid: borrowUtxo.txid,
         vout: borrowUtxo.vout,
         prevout: borrowPrevout,
       })
-      // add more collateral
+      // add more collateral 300k btc
       .withUtxo({
         txid: newCollateralCoin.utxo.txid,
         vout: newCollateralCoin.utxo.vout,
         prevout: newCollateralCoin.prevout,
-        unblindData: newCollateralCoin.unblindData
+        unblindData: newCollateralCoin.unblindData,
       })
-      // burn asset
+      // burn asset 500k synth
       .withOpReturn(borrowUtxo.value, borrowUtxo.asset)
-      // new contract with more collateral 
-      .withRecipient(newContract.address, newCollateralAmount, network.assetHash)
-      // utxo collateral change. We use the second input as blinder index
+      // new contract with more collateral 200k
+      .withRecipient(
+        newContract.address,
+        newCollateralAmount,
+        network.assetHash
+      )
+      // utxo collateral change. 200k miuns fee
+      // We use the second input as blinder index
       .withRecipient(
         borrower.confidentialAddress!,
-        newCollateralCoinAmount - newCollateralAmount - feeAmount,
+        collateralAmount +
+          newCollateralCoinAmount -
+          newCollateralAmount -
+          feeAmount,
         network.assetHash,
         2
-      );
+      )
+      .withFeeOutput(feeAmount);
 
-      const zkpValidator = new ZKPValidator(zkp);
-      const zkpGenerator = new ZKPGenerator(
-        zkp,
-        ZKPGenerator.WithOwnedInputs(tx.unblindedInputs)
-      );
-      const outputBlindingArgs = zkpGenerator.blindOutputs(
-        tx.pset,
-        Pset.ECCKeysGenerator(ecc)
-      );
-      const blinder = new Blinder(
-        tx.pset,
-        tx.unblindedInputs,
-        zkpValidator,
-        zkpGenerator
-      );
-      blinder.blindLast({
-        outputBlindingArgs,
-      });
+    const ptx = await tx.unlock();
 
-      console.log('blinded');
+    // sign and finalize the synth asset input
+    signInput(ptx.pset, 1, bobPk);
+    signInput(ptx.pset, 2, bobPk);
 
+    const finalizer = new Finalizer(ptx.pset);
+    finalizer.finalize();
 
+    const finalTx = Extractor.extract(ptx.pset);
+    const hex = finalTx.toHex();
+
+    const txid = await broadcast(hex);
+    expect(txid).toBeDefined();
   });
 
   it('should liquidate with oracle attestation', async () => {
@@ -300,7 +297,6 @@ describe('SyntheticAsset', () => {
     const partialSignedTx = await tx.unlock();
 
     // sign and finalize the synth asset input
-    //const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
     const signedPset = signInput(partialSignedTx.pset, 1, bobPk);
 
     const finalizer = new Finalizer(signedPset);
