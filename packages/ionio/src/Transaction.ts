@@ -52,9 +52,9 @@ export interface TaprootData {
 
 export class Transaction implements TransactionInterface {
   public pset: Pset;
+  public unblindedInputs: OwnedInput[] = [] as any;
 
   private fundingUtxoIndex: number = 0;
-  private unblindedInputs: OwnedInput[] = [] as any;
 
   constructor(
     private constructorInputs: Parameter[],
@@ -200,7 +200,7 @@ export class Transaction implements TransactionInterface {
     assetID: string = this.network.assetHash,
     hexChunks: string[] = [],
     blindingPublicKeyHex?: string,
-    blinderIndex: number = 0
+    blinderIndex: number | undefined = undefined
   ): this {
     const opRetScript = script.compile([
       script.OPS.OP_RETURN,

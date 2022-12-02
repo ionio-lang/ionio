@@ -58,7 +58,7 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
-    "liquidjs-lib": "^6.0.2-liquid.22"
+    "liquidjs-lib": "^6.0.2-liquid.23"
   },
   "jest": {
     "testTimeout": 15000

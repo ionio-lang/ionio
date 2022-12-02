@@ -23,15 +23,10 @@ describe('transformArtifact', () => {
       AssetHash.fromHex(
         '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225'
       ).hex,
-      AssetHash.fromHex(
-        '5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225'
-      ).hex,
       templateString('borrowAmount2'),
-      templateString('payoutAmount2'),
       templateString('borrowePk'),
       templateString('oraclePk'),
-      templateString('payoutPk'),
-      templateString('issuerScriptProgram'),
+      templateString('issuerPk'),
       templateString('priceLevel'),
       templateString('setupTimestamp'),
     ]);
