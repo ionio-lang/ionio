@@ -44,6 +44,8 @@ export class Contract implements ContractInterface {
     [name: string]: ContractFunction;
   };
 
+  contractParams: { [name: string]: Argument } = {};
+
   leaves: bip341.TaprootLeaf[];
   scriptPubKey: Buffer;
   parity: number;
@@ -89,10 +91,15 @@ export class Contract implements ContractInterface {
     // name
     this.name = artifact.contractName;
 
+    // contract parameters by name
+    this.artifact.constructorInputs.forEach((input, index) => {
+      this.contractParams[input.name] = constructorArgs[index];
+    });
+
     const bip341API = bip341.BIP341Factory(this.secp256libs.ecc);
     const hashTree = bip341.toHashTree(this.leaves);
 
-    // scriptPubKey & addressl
+    // scriptPubKey & address
     this.scriptPubKey = bip341API.taprootOutputScript(H_POINT, hashTree);
     this.address = address.fromOutputScript(this.scriptPubKey, this.network);
 
