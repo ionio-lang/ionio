@@ -1,0 +1,33 @@
+{
+  "contractName": "TransferWithKey",
+  "constructorInputs": [
+    {
+      "name": "pubKey",
+      "type": "xonlypubkey"
+    }
+  ],
+  "functions": [
+    {
+      "name": "transfer",
+      "functionInputs": [
+        {
+          "name": "ownerSignature",
+          "type": "sig"
+        }
+      ],
+      "require": [],
+      "asm": [
+        "$pubKey",
+        "OP_CHECKSIG"
+      ]
+    },
+    {
+      "name": "unsafe",
+      "functionInputs": [],
+      "require": [],
+      "asm": [
+        "OP_TRUE"
+      ]
+    }
+  ]
+}
