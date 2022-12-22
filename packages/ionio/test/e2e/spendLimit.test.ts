@@ -35,16 +35,16 @@ describe('SpendLimit', () => {
       const feeAmount = 100;
 
       // lets instantiare the contract using the funding transacton
-      const instance = contract.from(
-        utxo.txid,
-        utxo.vout,
-        prevout
-      );
+      const instance = contract.from(utxo.txid, utxo.vout, prevout);
 
       const tx = instance.functions
         .spendLessThanLimit(amount)
         .withRecipient(to, amount, network.assetHash)
-        .withRecipient(contract.address, 10000 - amount - feeAmount, network.assetHash)
+        .withRecipient(
+          contract.address,
+          10000 - amount - feeAmount,
+          network.assetHash
+        )
         .withFeeOutput(feeAmount);
 
       const signedTx = await tx.unlock();
@@ -59,11 +59,7 @@ describe('SpendLimit', () => {
       const amount = 10000 - feeAmount;
 
       // lets instantiare the contract using the funding transacton
-      const instance = contract.from(
-        utxo.txid,
-        utxo.vout,
-        prevout
-      );
+      const instance = contract.from(utxo.txid, utxo.vout, prevout);
 
       const tx = instance.functions
         .spendLessThanLimit(amount)
