@@ -1,4 +1,5 @@
 import { ElementsValue, script } from 'liquidjs-lib';
+import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
 import { isSigner, Signer } from './Signer';
 
 export type Argument = number | boolean | string | Buffer | Signer;
@@ -13,6 +14,7 @@ export enum PrimitiveType {
   DataSignature = 'datasig',
   PublicKey = 'pubkey',
   XOnlyPublicKey = 'xonlypubkey',
+  UInt64 = 'uint64',
 }
 
 export function encodeArgument(
@@ -32,10 +34,17 @@ export function encodeArgument(
       return value;
 
     case PrimitiveType.Number:
-      if (typeof value !== 'number') {
-        throw new TypeError(typeof value, typeStr);
-      }
+      if (typeof value !== 'number') throw new TypeError(typeof value, typeStr);
+
       return script.number.encode(value);
+
+    case PrimitiveType.UInt64:
+      if (typeof value !== 'number') throw new TypeError(typeof value, typeStr);
+
+      const buffer = Buffer.alloc(8);
+      writeUInt64LE(buffer, value as number, 0);
+
+      return buffer;
 
     case PrimitiveType.XOnlyPublicKey:
       if (typeof value === 'string' && value.startsWith('0x')) {

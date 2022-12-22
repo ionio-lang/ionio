@@ -1,0 +1,25 @@
+{
+  "contractName": "spendLimit",
+  "constructorInputs": [
+    {
+      "name": "limit",
+      "type": "uint64"
+    }
+  ],
+  "functions": [
+    {
+      "name": "spendLessThanLimit",
+      "functionInputs": [
+        {
+          "name": "amount",
+          "type": "uint64"
+        }
+      ],
+      "require": [],
+      "asm":[
+        "$limit",
+        "OP_LESSTHAN64"
+      ]
+    }
+  ]
+}
