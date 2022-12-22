@@ -42,8 +42,7 @@ export default function Home() {
     const pubkey = getPublicKey();
     const pubkeyBuffer = Buffer.from(pubkey.buffer)
 
-    const contract = new Contract(artifact as Artifact, [ pubkeyBuffer ], networks.testnet, { ecc, zkp: await secp256k1zkp()}
-    )
+    const contract = new Contract(artifact as Artifact, [ pubkeyBuffer ], networks.testnet, { ecc, zkp: await secp256k1zkp()})
 
     setContract(contract);
   }
