@@ -8,7 +8,6 @@ const ECPair = ECPairFactory(ecc);
 export function ionioSigner(pubKey: Buffer, signSchnorr: (sigHash: Buffer) => Promise<Buffer>, genesisBlockHash: Buffer) {
   return {
     signTransaction: async (base64: string): Promise<string> => {
-      console.log(base64);
       const pset = Pset.fromBase64(base64);
       const signer = new PsetSigner(pset);
 
