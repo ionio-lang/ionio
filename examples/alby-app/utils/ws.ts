@@ -221,7 +221,7 @@ export class ElectrumWS extends Observable {
     this.options.reconnect = false;
 
     // Reject all pending requests
-    for (const [id, request] of this.requests) {
+    for (const [id, request] of this.requests.entries()) {
       clearTimeout(request.timeout);
       this.requests.delete(id);
       console.debug('Rejecting pending request:', request.method);
