@@ -75,9 +75,6 @@ Install depenendencies
 ```
 yarn add @ionio-lang/ionio tiny-secp256k1
 ```
-```
-yarn add liquidjs-lib-taproot
-```
 
 
 2. Create a `calculator.json` file in `src`
@@ -140,14 +137,13 @@ yarn add liquidjs-lib-taproot
 4. Add script section on top
 
 ```ts
-<script type="ts" async>
+<script type="ts">
   import { Artifact, Contract } from '@ionio-lang/ionio';
-  import { networks, address, confidential, AssetHash } from 'liquidjs-lib';
+  import { networks, address, ElementsValue, AssetHash } from 'liquidjs-lib';
   import * as ecc from 'tiny-secp256k1';
   import artifact from './calculator.json';
 
   // instantiate the secp256-zkp wasm library
-  const zkp = await secp256k1();
   // define the network we going to work
   const network = networks.regtest;
   // create empty state
@@ -156,18 +152,16 @@ yarn add liquidjs-lib-taproot
   const sats = 100000;
   const fee = 100;
 
- 
-
-  // 📚 Let's compile the script 
+  // 📚 Let's compile the script
   const contract = new Contract(
     // our JSON artifact file
-    artifact as Artifact,  
+    artifact as Artifact,
     // our constructor to replace template strings
-    [3], 
+    [3],
     // network for address encoding
-    network, 
-    // injectable secp256k1 libraries 
-    { ecc, zkp } 
+    network,
+    // injectable secp256k1 libraries
+    { ecc, zkp: null }
   );
   const contractAddress = contract.address;
 </script>
@@ -194,41 +188,36 @@ Track down the `txid` and `vout` of the new unspent output that locks coin in th
 
 
 ```ts
-const onClick = async () => {
-  const txid = prompt('Enter a transaction hash');
-  const vout = prompt('Enter the vout');
-    
-  // attach to the funded contract using the utxo
-  const instance = contract.from(
-    // tranaction ID
-    txid,
-    // previous output index
-    parseInt(vout),
-    // the full previous output 
-    {
-      script: address.toOutputScript(contractAddress),
-      value: confidential.satoshiToConfidentialValue(sats),
-      asset: AssetHash.fromHex(network.assetHash, false).bytes,
-      nonce: Buffer.alloc(0),
-    }
-  );
+  const onClick = async () => {
+    const txid = prompt('Enter a transaction hash');
+    const vout = prompt('Enter the vout');
 
+    // attach to the funded contract using the utxo
+    const instance = contract.from(
+      // tranaction ID
+      txid,
+      // previous output index
+      parseInt(vout),
+      // the full previous output
+      {
+        script: address.toOutputScript(contractAddress),
+        value: ElementsValue.fromNumber(sats).bytes,
+        asset: AssetHash.fromHex(network.assetHash).bytes,
+        nonce: Buffer.alloc(0),
+      }
+    );
 
-  const recipient = prompt('Enter a recipient to send funds to');
-  
-  const tx = await instance.functions
-      .sumMustBeThree(1,2)
-      .withRecipient(
-        recipient,
-        sats - fee,
-        network.assetHash
-      )
+    const recipient = prompt('Enter a recipient to send funds to');
+
+    const tx = await instance.functions
+      .sumMustBeThree(1, 2)
+      .withRecipient(recipient, sats - fee, network.assetHash)
       .withFeeOutput(fee)
       .unlock();
 
-  // extract and broadcast
-  txhex = tx.psbt.extractTransaction().toHex();
-}
+    // extract and broadcast
+    txhex = tx.toHex();
+  };
 ```
 
 2. Add the `onClick` to the `on:click` Svelte directive of the button
@@ -246,7 +235,7 @@ It will ask you to enter a transaction hash and vout and an recipient address.
 Get a fresh unconfidential address
 
 ```sh 
-nigiri rpc --liquid validateaddress `nigiri rpc --liquid getnewaddress` | jq .unconfidential
+nigiri rpc --liquid validateaddress `nigiri rpc --liquid getnewaddress`
 ```
 
 Broadcast 
