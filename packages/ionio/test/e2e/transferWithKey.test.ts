@@ -1,4 +1,3 @@
-import * as ecc from 'tiny-secp256k1';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 import { Contract } from '../../src';
@@ -13,30 +12,19 @@ describe('TransferWithKey', () => {
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
   //let unblindData: confidential.UnblindOutputResult | undefined;
-  const signer: Signer = getSignerWithECPair(alicePk, network);
+  let signer: Signer;
 
   beforeAll(async () => {
     const zkp = await secp256k1();
+    signer = getSignerWithECPair(alicePk, network, zkp.ecc);
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/transfer_with_key.json');
     contract = new Contract(
       artifact,
       [`0x${alicePk.publicKey.slice(1).toString('hex')}`],
       network,
-      {
-        ecc,
-        zkp,
-      }
+      zkp
     );
-
-    /**
-     *     // re-using script's pubkey for the blinding one
-      const confidentialAddress = address.toConfidential(
-        contract.address,
-        alicePk.publicKey
-      );
-     * 
-     */
 
     const response = await faucetComplex(
       contract.address,
@@ -47,7 +35,6 @@ describe('TransferWithKey', () => {
 
     prevout = response.prevout;
     utxo = response.utxo;
-    //unblindData = response.unblindData || undefined;
   });
 
   describe('transfer', () => {

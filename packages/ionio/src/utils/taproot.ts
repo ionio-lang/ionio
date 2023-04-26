@@ -1,9 +1,9 @@
-import { bip341, crypto } from 'liquidjs-lib';
+import { bip341, crypto, Ecc } from 'liquidjs-lib';
 
 export function tweakPublicKey(
   publicKey: Buffer,
   hash: Buffer,
-  ecc: bip341.TinySecp256k1Interface
+  ecc: Ecc
 ): bip341.XOnlyPointAddTweakResult {
   const XOnlyPubKey = publicKey.slice(1, 33);
   const toTweak = Buffer.concat([XOnlyPubKey, hash]);

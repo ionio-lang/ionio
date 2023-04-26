@@ -16,6 +16,7 @@ import {
   ZKPGenerator,
   ZKPValidator,
   TapLeafScript,
+  Secp256k1Interface,
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
@@ -66,8 +67,7 @@ export class Transaction implements TransactionInterface {
     unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined,
     private taprootData: TaprootData,
     private network: networks.Network,
-    private ecclib: bip341.TinySecp256k1Interface,
-    private zkplib: confidential.ZKPInterface
+    private secp256k1: Secp256k1Interface,
   ) {
     this.pset = Creator.newPset();
 
@@ -325,13 +325,13 @@ export class Transaction implements TransactionInterface {
         );
 
       const zkpGenerator = new ZKPGenerator(
-        this.zkplib,
+        this.secp256k1,
         ZKPGenerator.WithOwnedInputs(this.unblindedInputs)
       );
-      const zkpValidator = new ZKPValidator(this.zkplib);
+      const zkpValidator = new ZKPValidator(this.secp256k1);
       const outputBlindingArgs = zkpGenerator.blindOutputs(
         this.pset,
-        Pset.ECCKeysGenerator(this.ecclib)
+        Pset.ECCKeysGenerator(this.secp256k1.ecc)
       );
 
       const blinder = new Blinder(

@@ -1,14 +1,14 @@
-import * as ecc from 'tiny-secp256k1';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 import { Contract } from '../../src';
 import { alicePk, network } from '../fixtures/vars';
-import { address, payments, TxOutput } from 'liquidjs-lib';
+import { address, payments, Secp256k1Interface, TxOutput } from 'liquidjs-lib';
 import { broadcast, faucetComplex } from '../utils';
 import { Artifact } from '../../src/Artifact';
 
 describe('SingleHopVault', () => {
   let contract: Contract;
+  let zkp: Secp256k1Interface;
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
 
@@ -24,15 +24,18 @@ describe('SingleHopVault', () => {
   const someoneElse = payments.p2wpkh({ pubkey: alicePk.publicKey, network })
     .address!;
 
+  beforeAll(async () => {
+    zkp = await secp256k1();
+  });
   beforeEach(async () => {
-    const zkp = await secp256k1();
+    
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/single_hop_vault.json');
     contract = new Contract(
       artifact,
       [coldScriptProgram, hotScriptProgram, sats - fee, network.assetHash, 2],
       network,
-      { ecc, zkp }
+      zkp
     );
     const response = await faucetComplex(contract.address, sats / 10 ** 8);
 

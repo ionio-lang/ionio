@@ -1,5 +1,5 @@
 import * as ecc from 'tiny-secp256k1';
-import secp256k1 from '@vulpemventures/secp256k1-zkp';
+import secp256k1ZKP from '@vulpemventures/secp256k1-zkp';
 
 import { Artifact, Contract, Signer } from '../../src';
 import { ECPairInterface } from 'ecpair';
@@ -12,6 +12,8 @@ import {
   Transaction as LiquidTransaction,
   Finalizer,
   Pset,
+  Ecc,
+  Secp256k1Interface,
 } from 'liquidjs-lib';
 import crypto from 'crypto';
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
@@ -38,14 +40,14 @@ const artifact = require('../fixtures/synthetic_asset.json');
 
 describe('SyntheticAsset', () => {
   const issuer = payments.p2wpkh({ pubkey: alicePk.publicKey, network })!;
-  const issuerSigner: Signer = getSignerWithECPair(alicePk, network);
+  let issuerSigner: Signer;
 
   const borrower = payments.p2wpkh({
     pubkey: bobPk.publicKey,
     network,
     blindkey: bobPk.publicKey,
   })!;
-  const borrowerSigner: Signer = getSignerWithECPair(bobPk, network);
+  let borrowerSigner: Signer;
 
   let contract: Contract;
   let covenantPrevout: TxOutput;
@@ -64,6 +66,7 @@ describe('SyntheticAsset', () => {
     asset: string;
   };
   let instance: Contract;
+  let zkp: Secp256k1Interface;
   const borrowAmount = 500000;
   const collateralAmount = 100000;
   const feeAmount = 500;
@@ -87,11 +90,13 @@ describe('SyntheticAsset', () => {
       (borrowAmount * 3) / 10 ** 8
     );
     synthMintUtxo = mintResponse.utxo;
+    zkp = await secp256k1ZKP();
+    issuerSigner = getSignerWithECPair(alicePk, network, zkp.ecc);
+    borrowerSigner = getSignerWithECPair(bobPk, network, zkp.ecc);
   });
 
   beforeEach(async () => {
     try {
-      const zkp = await secp256k1();
       contract = new Contract(
         artifact,
         [
@@ -104,7 +109,22 @@ describe('SyntheticAsset', () => {
           timestampBytes,
         ],
         network,
-        { ecc, zkp }
+        {
+          ...zkp,
+          ecc: {
+            ...zkp.ecc,
+            xOnlyPointAddTweak: (pubkey: Uint8Array, tweak: Uint8Array) => {
+              try {
+                const tweaked = zkp.ecc.xOnlyPointAddTweak(pubkey, tweak);
+                return tweaked;
+              } catch (e) {
+                console.log(pubkey, tweak)
+                console.log(zkp.ecc.xOnlyPointAddTweak)
+                throw e;
+              }
+            }
+          }
+        },
       );
     } catch (e) {
       console.error(e);
@@ -156,8 +176,8 @@ describe('SyntheticAsset', () => {
 
     const partialSignedTx = await tx.unlock();
 
-    //const signedTx = await partialSignedTx.psbt.signInput(1, bobPk);
-    const signedPset = signInput(partialSignedTx.pset, 1, bobPk);
+    
+    const signedPset = signInput(partialSignedTx.pset, 1, bobPk, ecc as unknown as Ecc);
 
     const finalizer = new Finalizer(signedPset);
     finalizer.finalize();
@@ -181,7 +201,6 @@ describe('SyntheticAsset', () => {
     const newPriceLevel = priceLevel * 2;
     const newTimestamp = 1669599853; // Mon Nov 28 01:44:13 2022 UTC
 
-    const zkp = await secp256k1();
     const newContract = new Contract(
       artifact as Artifact,
       [
@@ -194,10 +213,7 @@ describe('SyntheticAsset', () => {
         numberToBytesLE64(newTimestamp),
       ],
       network,
-      {
-        ecc,
-        zkp,
-      }
+      zkp
     );
 
     const tx = instance.functions
@@ -239,8 +255,8 @@ describe('SyntheticAsset', () => {
     const ptx = await tx.unlock();
 
     // sign and finalize the synth asset input
-    signInput(ptx.pset, 1, bobPk);
-    signInput(ptx.pset, 2, bobPk);
+    signInput(ptx.pset, 1, bobPk, zkp.ecc);
+    signInput(ptx.pset, 2, bobPk, zkp.ecc);
 
     const finalizer = new Finalizer(ptx.pset);
     finalizer.finalize();
@@ -297,7 +313,7 @@ describe('SyntheticAsset', () => {
     const partialSignedTx = await tx.unlock();
 
     // sign and finalize the synth asset input
-    const signedPset = signInput(partialSignedTx.pset, 1, bobPk);
+    const signedPset = signInput(partialSignedTx.pset, 1, bobPk, ecc as unknown as Ecc);
 
     const finalizer = new Finalizer(signedPset);
     finalizer.finalize();
@@ -310,7 +326,7 @@ describe('SyntheticAsset', () => {
   });
 });
 
-function signInput(pset: Pset, index: number, keyPair: ECPairInterface) {
+function signInput(pset: Pset, index: number, keyPair: ECPairInterface, ecc: Ecc) {
   const signer = new PsetSigner(pset);
   // segwit v0 input
   const sigHashType =
