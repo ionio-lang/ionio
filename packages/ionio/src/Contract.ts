@@ -96,7 +96,7 @@ export class Contract implements ContractInterface {
       this.contractParams[input.name] = constructorArgs[index];
     });
 
-    const bip341API = bip341.BIP341Factory(ecc as unknown as Ecc);
+    const bip341API = bip341.BIP341Factory((ecc as unknown) as Ecc);
     const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & address
@@ -181,7 +181,7 @@ export class Contract implements ContractInterface {
           parity: this.parity,
         },
         this.network,
-        this.secp256k1ZKP,
+        this.secp256k1ZKP
       );
     };
   }

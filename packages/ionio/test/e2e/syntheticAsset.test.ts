@@ -118,13 +118,13 @@ describe('SyntheticAsset', () => {
                 const tweaked = zkp.ecc.xOnlyPointAddTweak(pubkey, tweak);
                 return tweaked;
               } catch (e) {
-                console.log(pubkey, tweak)
-                console.log(zkp.ecc.xOnlyPointAddTweak)
+                console.log(pubkey, tweak);
+                console.log(zkp.ecc.xOnlyPointAddTweak);
                 throw e;
               }
-            }
-          }
-        },
+            },
+          },
+        }
       );
     } catch (e) {
       console.error(e);
@@ -176,8 +176,12 @@ describe('SyntheticAsset', () => {
 
     const partialSignedTx = await tx.unlock();
 
-    
-    const signedPset = signInput(partialSignedTx.pset, 1, bobPk, ecc as unknown as Ecc);
+    const signedPset = signInput(
+      partialSignedTx.pset,
+      1,
+      bobPk,
+      (ecc as unknown) as Ecc
+    );
 
     const finalizer = new Finalizer(signedPset);
     finalizer.finalize();
@@ -313,7 +317,12 @@ describe('SyntheticAsset', () => {
     const partialSignedTx = await tx.unlock();
 
     // sign and finalize the synth asset input
-    const signedPset = signInput(partialSignedTx.pset, 1, bobPk, ecc as unknown as Ecc);
+    const signedPset = signInput(
+      partialSignedTx.pset,
+      1,
+      bobPk,
+      (ecc as unknown) as Ecc
+    );
 
     const finalizer = new Finalizer(signedPset);
     finalizer.finalize();
@@ -326,7 +335,12 @@ describe('SyntheticAsset', () => {
   });
 });
 
-function signInput(pset: Pset, index: number, keyPair: ECPairInterface, ecc: Ecc) {
+function signInput(
+  pset: Pset,
+  index: number,
+  keyPair: ECPairInterface,
+  ecc: Ecc
+) {
   const signer = new PsetSigner(pset);
   // segwit v0 input
   const sigHashType =

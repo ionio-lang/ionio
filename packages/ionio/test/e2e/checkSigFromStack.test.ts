@@ -7,7 +7,7 @@ import { payments, TxOutput } from 'liquidjs-lib';
 
 describe('CheckSigFromStack', () => {
   let contract: Contract;
-  
+
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
 

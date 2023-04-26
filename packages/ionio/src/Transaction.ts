@@ -67,7 +67,7 @@ export class Transaction implements TransactionInterface {
     unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined,
     private taprootData: TaprootData,
     private network: networks.Network,
-    private secp256k1: Secp256k1Interface,
+    private secp256k1: Secp256k1Interface
   ) {
     this.pset = Creator.newPset();
 

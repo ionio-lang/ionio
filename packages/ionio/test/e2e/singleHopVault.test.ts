@@ -28,7 +28,6 @@ describe('SingleHopVault', () => {
     zkp = await secp256k1();
   });
   beforeEach(async () => {
-    
     // eslint-disable-next-line global-require
     const artifact: Artifact = require('../fixtures/single_hop_vault.json');
     contract = new Contract(
