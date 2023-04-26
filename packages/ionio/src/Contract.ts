@@ -8,6 +8,8 @@ import {
   TxOutput,
   bip341,
   confidential,
+  Secp256k1Interface,
+  Ecc,
 } from 'liquidjs-lib';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
@@ -15,7 +17,7 @@ import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
 import { checkRequirements } from './Requirement';
 import { Output, UnblindedOutput } from './types';
-import { ZKPInterface } from 'liquidjs-lib/src/confidential';
+import * as ecc from 'tiny-secp256k1';
 
 export interface ContractInterface {
   name: string;
@@ -29,7 +31,8 @@ export interface ContractInterface {
   leaves: { scriptHex: string }[];
   scriptPubKey: Buffer;
   from(txid: string, vout: number, prevout: TxOutput): ContractInterface;
-  getTaprootTree(): bip341.HashTree;
+  taprootTree: bip341.HashTree;
+  contractParameters: { [name: string]: Argument };
 }
 
 export class Contract implements ContractInterface {
@@ -54,10 +57,7 @@ export class Contract implements ContractInterface {
     private artifact: Artifact,
     private constructorArgs: Argument[],
     private network: networks.Network,
-    private secp256libs: {
-      ecc: bip341.TinySecp256k1Interface;
-      zkp: ZKPInterface;
-    }
+    private secp256k1ZKP: Secp256k1Interface
   ) {
     validateArtifact(artifact, constructorArgs);
 
@@ -96,7 +96,7 @@ export class Contract implements ContractInterface {
       this.contractParams[input.name] = constructorArgs[index];
     });
 
-    const bip341API = bip341.BIP341Factory(this.secp256libs.ecc);
+    const bip341API = bip341.BIP341Factory((ecc as unknown) as Ecc);
     const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & address
@@ -107,15 +107,19 @@ export class Contract implements ContractInterface {
     const { parity } = tweakPublicKey(
       H_POINT,
       hashTree.hash,
-      this.secp256libs.ecc
+      this.secp256k1ZKP.ecc
     );
     this.parity = parity;
     // TODO add bytesize calculation
     //this.bytesize = calculateBytesize(this.leaves);
   }
 
-  getTaprootTree(): bip341.HashTree {
+  get taprootTree(): bip341.HashTree {
     return bip341.toHashTree(this.leaves, true);
+  }
+
+  get contractParameters(): { [name: string]: Argument } {
+    return this.contractParams;
   }
 
   from(
@@ -177,8 +181,7 @@ export class Contract implements ContractInterface {
           parity: this.parity,
         },
         this.network,
-        this.secp256libs.ecc,
-        this.secp256libs.zkp
+        this.secp256k1ZKP
       );
     };
   }

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { ECPairInterface } from 'ecpair';
-import * as ecc from 'tiny-secp256k1';
 import {
   confidential,
   networks,
@@ -8,6 +7,7 @@ import {
   Transaction,
   TxOutput,
   bip341,
+  Ecc,
 } from 'liquidjs-lib';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 import { Signer } from '../src/Signer';
@@ -162,7 +162,8 @@ export async function broadcast(
 
 export function getSignerWithECPair(
   keyPair: ECPairInterface,
-  network: networks.Network
+  network: networks.Network,
+  ecc: Ecc
 ): Signer {
   return {
     signTransaction: async (base64: string): Promise<string> => {

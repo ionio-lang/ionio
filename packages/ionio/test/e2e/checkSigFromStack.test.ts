@@ -1,4 +1,3 @@
-import * as ecc from 'tiny-secp256k1';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 import { Contract } from '../../src';
@@ -8,6 +7,7 @@ import { payments, TxOutput } from 'liquidjs-lib';
 
 describe('CheckSigFromStack', () => {
   let contract: Contract;
+
   let prevout: TxOutput;
   let utxo: { txid: string; vout: number; value: number; asset: string };
 
@@ -23,7 +23,7 @@ describe('CheckSigFromStack', () => {
         '0x25d1dff95105f5253c4022f628a996ad3a0d95fbf21d468a1b33f8c160d8f517',
       ],
       network,
-      { ecc, zkp }
+      zkp
     );
 
     const response = await faucetComplex(contract.address, 0.0001);

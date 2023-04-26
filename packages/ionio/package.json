@@ -46,9 +46,10 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "@vulpemventures/secp256k1-zkp": "^2.1.1",
+    "@vulpemventures/secp256k1-zkp": "^3.0.0",
     "axios": "^0.27.2",
     "bip32": "^3.0.1",
+    "ecpair": "2.0.1",
     "husky": "^8.0.1",
     "randombytes": "^2.1.0",
     "size-limit": "^7.0.8",
@@ -58,7 +59,10 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
-    "liquidjs-lib": "^6.0.2-liquid.23"
+    "liquidjs-lib": "^6.0.2-liquid.24"
+  },
+  "resolutions": {
+    "ecpair": "2.0.1"
   },
   "jest": {
     "testTimeout": 15000

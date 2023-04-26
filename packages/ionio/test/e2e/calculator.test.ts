@@ -1,4 +1,3 @@
-import * as ecc from 'tiny-secp256k1';
 import secp256k1 from '@vulpemventures/secp256k1-zkp';
 
 import { Contract } from '../../src';
@@ -15,7 +14,7 @@ describe('Calculator', () => {
     const zkp = await secp256k1();
     // eslint-disable-next-line global-require
     const artifact = require('../fixtures/calculator.json');
-    contract = new Contract(artifact, [3], network, { ecc, zkp });
+    contract = new Contract(artifact, [3], network, zkp);
     const response = await faucetComplex(contract.address, 0.0001);
 
     prevout = response.prevout;
