@@ -9,7 +9,6 @@ import {
   bip341,
   confidential,
   Secp256k1Interface,
-  Ecc,
 } from 'liquidjs-lib';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
@@ -17,7 +16,6 @@ import { replaceTemplateWithConstructorArg } from './utils/template';
 import { isSigner } from './Signer';
 import { checkRequirements } from './Requirement';
 import { Output, UnblindedOutput } from './types';
-import * as ecc from 'tiny-secp256k1';
 
 export interface ContractInterface {
   name: string;
@@ -96,7 +94,7 @@ export class Contract implements ContractInterface {
       this.contractParams[input.name] = constructorArgs[index];
     });
 
-    const bip341API = bip341.BIP341Factory((ecc as unknown) as Ecc);
+    const bip341API = bip341.BIP341Factory(secp256k1ZKP.ecc);
     const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & address
