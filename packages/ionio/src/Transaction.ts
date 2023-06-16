@@ -20,7 +20,7 @@ import {
 } from 'liquidjs-lib';
 import { Argument, encodeArgument } from './Argument';
 import { ArtifactFunction, Parameter } from './Artifact';
-import { H_POINT, LEAF_VERSION_TAPSCRIPT } from './constants';
+import { LEAF_VERSION_TAPSCRIPT } from './constants';
 import { isSigner } from './Signer';
 import { Introspect } from './Introspect';
 import { RequiredOutput, RequirementType, ScriptPubKey } from './Requirement';
@@ -67,7 +67,8 @@ export class Transaction implements TransactionInterface {
     unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined,
     private taprootData: TaprootData,
     private network: networks.Network,
-    private secp256k1: Secp256k1Interface
+    private secp256k1: Secp256k1Interface,
+    internalPublicKey: Buffer
   ) {
     this.pset = Creator.newPset();
 
@@ -81,7 +82,11 @@ export class Transaction implements TransactionInterface {
 
     const parityBit = Buffer.of(leafVersion + this.taprootData.parity);
 
-    const controlBlock = Buffer.concat([parityBit, H_POINT.slice(1), ...path]);
+    const controlBlock = Buffer.concat([
+      parityBit,
+      internalPublicKey.subarray(1),
+      ...path,
+    ]);
 
     let sequence;
     this.artifactFunction.require.forEach(requirement => {

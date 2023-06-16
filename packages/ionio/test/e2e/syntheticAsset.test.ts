@@ -114,14 +114,8 @@ describe('SyntheticAsset', () => {
           ecc: {
             ...zkp.ecc,
             xOnlyPointAddTweak: (pubkey: Uint8Array, tweak: Uint8Array) => {
-              try {
-                const tweaked = zkp.ecc.xOnlyPointAddTweak(pubkey, tweak);
-                return tweaked;
-              } catch (e) {
-                console.log(pubkey, tweak);
-                console.log(zkp.ecc.xOnlyPointAddTweak);
-                throw e;
-              }
+              const tweaked = zkp.ecc.xOnlyPointAddTweak(pubkey, tweak);
+              return tweaked;
             },
           },
         }
