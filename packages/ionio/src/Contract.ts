@@ -1,3 +1,4 @@
+import { ECPairFactory } from 'ecpair';
 import { Transaction } from './Transaction';
 import { Argument, encodeArgument } from './Argument';
 import { Artifact, ArtifactFunction, validateArtifact } from './Artifact';
@@ -9,6 +10,7 @@ import {
   bip341,
   confidential,
   Secp256k1Interface,
+  crypto,
 } from 'liquidjs-lib';
 import { H_POINT } from './constants';
 import { tweakPublicKey } from './utils/taproot';
@@ -31,6 +33,8 @@ export interface ContractInterface {
   from(txid: string, vout: number, prevout: TxOutput): ContractInterface;
   taprootTree: bip341.HashTree;
   contractParameters: { [name: string]: Argument };
+  internalPublicKey: Buffer; // default is H_POINT
+  tweakInternalKey(prvKey: Buffer): Buffer;
 }
 
 export class Contract implements ContractInterface {
@@ -40,13 +44,10 @@ export class Contract implements ContractInterface {
   unblindDataFundingUtxo: confidential.UnblindOutputResult | undefined;
   // TODO add bytesize calculation
   bytesize: number = 0;
-
   functions: {
     [name: string]: ContractFunction;
   };
-
   contractParams: { [name: string]: Argument } = {};
-
   leaves: bip341.TaprootLeaf[];
   scriptPubKey: Buffer;
   parity: number;
@@ -55,7 +56,8 @@ export class Contract implements ContractInterface {
     private artifact: Artifact,
     private constructorArgs: Argument[],
     private network: networks.Network,
-    private secp256k1ZKP: Secp256k1Interface
+    private secp256k1ZKP: Secp256k1Interface,
+    public internalPublicKey = H_POINT
   ) {
     validateArtifact(artifact, constructorArgs);
 
@@ -98,12 +100,15 @@ export class Contract implements ContractInterface {
     const hashTree = bip341.toHashTree(this.leaves);
 
     // scriptPubKey & address
-    this.scriptPubKey = bip341API.taprootOutputScript(H_POINT, hashTree);
+    this.scriptPubKey = bip341API.taprootOutputScript(
+      this.internalPublicKey,
+      hashTree
+    );
     this.address = address.fromOutputScript(this.scriptPubKey, this.network);
 
     // parity bit
     const { parity } = tweakPublicKey(
-      H_POINT,
+      this.internalPublicKey,
       hashTree.hash,
       this.secp256k1ZKP.ecc
     );
@@ -118,6 +123,37 @@ export class Contract implements ContractInterface {
 
   get contractParameters(): { [name: string]: Argument } {
     return this.contractParams;
+  }
+
+  tweakInternalKey(prvKey: Buffer): Buffer {
+    // check if not H_POINT
+    if (this.internalPublicKey.equals(H_POINT)) {
+      throw new Error('H_POINT is unspendable');
+    }
+
+    const signingEcPair = ECPairFactory(this.secp256k1ZKP.ecc).fromPrivateKey(
+      prvKey
+    );
+
+    const taprootTreeRoot = this.taprootTree.hash;
+
+    const privateKey =
+      signingEcPair.publicKey[0] === 2
+        ? signingEcPair.privateKey
+        : this.secp256k1ZKP.ecc.privateNegate(prvKey);
+
+    if (!privateKey) throw new Error('Invalid Private Key');
+
+    const tweakHash = crypto.taggedHash(
+      'TapTweak/elements',
+      Buffer.concat([this.internalPublicKey.subarray(1, 33), taprootTreeRoot])
+    );
+    const newPrivateKey = this.secp256k1ZKP.ecc.privateAdd(
+      privateKey,
+      tweakHash
+    );
+    if (newPrivateKey === null) throw new Error('Invalid Tweak');
+    return Buffer.from(newPrivateKey);
   }
 
   from(
@@ -179,7 +215,8 @@ export class Contract implements ContractInterface {
           parity: this.parity,
         },
         this.network,
-        this.secp256k1ZKP
+        this.secp256k1ZKP,
+        this.internalPublicKey
       );
     };
   }
