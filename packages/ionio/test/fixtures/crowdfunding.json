@@ -1,0 +1,101 @@
+{
+  "contractName": "CrowdFundingWithCap",
+  "constructorInputs": [
+    {
+      "name": "endGoalBlock",
+      "type": "number"
+    },
+    {
+      "name": "goal",
+      "type": "value"
+    },
+    {
+      "name": "fundingAsset",
+      "type": "asset"
+    },
+    {
+      "name": "beneficiaryProgram",
+      "type": "bytes"
+    },
+    {
+      "name": "donorPublicKey",
+      "type": "xonlypubkey"
+    }
+  ],
+  "functions": [
+    {
+      "name": "goalReached",
+      "functionInputs": [],
+      "require": [
+        {
+          "type": "outputvalue",
+          "expected": "$goal",
+          "atIndex": 0
+        },
+        {
+          "type": "outputasset",
+          "expected": "$fundingAsset",
+          "atIndex": 0
+        },
+        {
+          "type": "outputscript",
+          "expected": {
+            "version": 0,
+            "program": "$beneficiaryProgram"
+          },
+          "atIndex": 0
+        },
+        {
+          "type": "after",
+          "expected": "$endBlock"
+        }
+      ],
+      "asm": [
+        "$endBlock",
+        "OP_CHECKLOCKTIMEVERIFY",
+        "OP_DROP",
+        "OP_0",
+        "OP_INSPECTOUTPUTVALUE",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$goal",
+        "OP_GREATERTHANOREQUAL64",
+        "OP_VERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTASSET",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$fundingAsset",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTSCRIPTPUBKEY",
+        "OP_0",
+        "OP_EQUALVERIFY",
+        "$beneficiaryProgram",
+        "OP_EQUAL"
+      ]
+    },
+    {
+      "name": "claimBack",
+      "functionInputs": [
+        {
+          "name": "signature0",
+          "type": "sig"
+        }
+      ],
+      "require": [
+        {
+          "type": "after",
+          "expected": "$endBlock"
+        }
+      ],
+      "asm": [
+        "$endBlock",
+        "OP_CHECKLOCKTIMEVERIFY",
+        "OP_DROP",
+        "$donorPublicKey",
+        "OP_CHECKSIG"
+      ]
+    }
+  ]
+}
