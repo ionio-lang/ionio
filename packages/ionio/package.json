@@ -1,5 +1,5 @@
 {
-  "version": "0.5.2",
+  "version": "0.5.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -59,7 +59,7 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
-    "liquidjs-lib": "^6.0.2-liquid.32"
+    "liquidjs-lib": "^6.0.2-liquid.34"
   },
   "jest": {
     "testTimeout": 15000
