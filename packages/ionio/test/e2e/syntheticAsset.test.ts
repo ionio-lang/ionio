@@ -6,7 +6,6 @@ import { ECPairInterface } from 'ecpair';
 import { alicePk, bobPk, oraclePk, network } from '../fixtures/vars';
 import {
   payments,
-  address,
   script as bscript,
   TxOutput,
   Transaction as LiquidTransaction,
@@ -82,10 +81,10 @@ describe('SyntheticAsset', () => {
     // mint synthetic asset
     // NOTICE: this should happen as atomic swap, now we are simulating it
     // giving the borrower the asset before having him to lock collateral
-    const nigiriAddressConfidential = await getNewAddress();
+    const nigiriAddress = await getNewAddress();
     const mintResponse = await mintComplex(
       // we send to nigiri so we faucet for each test
-      address.fromConfidential(nigiriAddressConfidential).unconfidentialAddress,
+      nigiriAddress,
       // we mint three times the borrow amount for each test
       (borrowAmount * 3) / 10 ** 8
     );
