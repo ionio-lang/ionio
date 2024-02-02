@@ -13,6 +13,7 @@ import {
   Pset,
   Ecc,
   Secp256k1Interface,
+  address,
 } from 'liquidjs-lib';
 import crypto from 'crypto';
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
@@ -81,7 +82,11 @@ describe('SyntheticAsset', () => {
     // mint synthetic asset
     // NOTICE: this should happen as atomic swap, now we are simulating it
     // giving the borrower the asset before having him to lock collateral
-    const nigiriAddress = await getNewAddress();
+    let nigiriAddress = await getNewAddress();
+    if (address.isConfidential(nigiriAddress)) {
+      nigiriAddress = address.fromConfidential(nigiriAddress)
+        .unconfidentialAddress;
+    }
     const mintResponse = await mintComplex(
       // we send to nigiri so we faucet for each test
       nigiriAddress,
