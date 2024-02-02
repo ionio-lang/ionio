@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[933],{2286:function(e){e.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/liquid-network","name":"liquid network","count":1,"permalink":"/blog/tags/liquid-network"}')}}]);

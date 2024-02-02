@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[562],{2362:function(o){o.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/ionio","name":"ionio","count":1,"permalink":"/blog/tags/ionio"}')}}]);

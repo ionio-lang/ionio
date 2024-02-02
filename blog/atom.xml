@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://ionio-lang.org/blog</id>
+    <title>Ionio - Smart contract language Blog</title>
+    <updated>2022-09-01T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://ionio-lang.org/blog"/>
+    <subtitle>Ionio - Smart contract language Blog</subtitle>
+    <icon>https://ionio-lang.org/img/favicon.png</icon>
+    <entry>
+        <title type="html"><![CDATA[Build your first Liquid smart contract with Ionio SDK]]></title>
+        <id>ionio-calculator</id>
+        <link href="https://ionio-lang.org/blog/ionio-calculator"/>
+        <updated>2022-09-01T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Build a calculator smart contract with Elements Tapscript to be deployed on the Liquid Network]]></summary>
+        <content type="html"><![CDATA[<p>You got your faboulos script with all those cute opcodes, and now what? <strong>Ionio SDK FTW!</strong></p><h2>Context</h2><p>In the Bitcoin world, most of the possible scripts are <em>de-facto</em> standards all wallets follow, set in stone by the wallet developer.</p><p>In a <strong>post-Simplicty</strong> world, Bitcoin (tap)scripts will introduce much more capabilities, but
+stadardize all possible combination in all wallets becomes impossibile, will be the user (or any external app he&#x27;s interacting with) to instruct the wallet what to do at runtime.</p><p><strong>Output Descriptors</strong> and <strong>Miniscript</strong> could be a good candidate on how to generalize a way to import script, but i) lack of extensibility in cooperative script building scenarios ii) need to write a parser/compiler for each language makes it a bit <a href="/docs/Artifact#alternatives">cumbersome for wallet/libraries to work with</a>, plus the &quot;policy oriented&quot; nature does not well fit the introspection (ie. covenants) paradigm Simplicity will allow.</p><p>The feature to import a <strong>script template</strong> is fundamental for the wallet to <strong>track balances</strong> and to know <strong>how spend</strong> those coins in the future.</p><p>The <strong>Ionio Artifact</strong> it&#x27;s a JSON file that fully describe how a <strong>Pay to Taproot</strong> address is constructed, how the contract behaves and what it should be expected to do spend it in the future. The documentation fot the data structure can be found <a href="/docs/Artifact#structure">here</a></p><h1>🧮 You first &quot;calculator&quot;</h1><h2>Dev Environment</h2><ul><li><a href="https://docs.docker.com/desktop/linux/install">Docker Linux</a> or <a href="https://docs.docker.com/desktop/mac/install">Docker Desktop for Mac</a></li><li><a href="https://nigiri.vulpem.com">Nigiri</a></li><li>nodejs</li><li>yarn (optional, you can use npm)</li></ul><h3>Nigiri</h3><p>Install Nigiri</p><pre><code class="language-sh">curl https://getnigiri.vulpem.com | bash
+</code></pre><ol start="2"><li>Run a Liquid box</li></ol><pre><code class="language-sh">nigiri start --liquid
+</code></pre><h3>Install dependencies &amp; config</h3><ol><li>Project setup</li></ol><p>Pull a Svelte starter app</p><pre><code class="language-sh">npx degit &quot;tiero/svelte-webpack-bulma&quot; ionio-app
+</code></pre><p>Enter the folder </p><pre><code>cd ionio-app
+</code></pre><p>Install depenendencies </p><pre><code>yarn add @ionio-lang/ionio tiny-secp256k1
+</code></pre><ol start="2"><li>Create a <code>calculator.json</code> file in <code>src</code></li></ol><pre><code class="language-json">{
+  &quot;contractName&quot;: &quot;Calculator&quot;,
+  &quot;constructorInputs&quot;: [
+    {
+      &quot;name&quot;: &quot;sum&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    }
+  ],
+  &quot;functions&quot;: [
+    {
+      &quot;name&quot;: &quot;sumMustBeThree&quot;,
+      &quot;functionInputs&quot;: [
+        {
+          &quot;name&quot;: &quot;a&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        {
+          &quot;name&quot;: &quot;b&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        }
+      ],
+      &quot;require&quot;: [],
+      &quot;asm&quot;: [
+        &quot;OP_ADD&quot;,
+        &quot;$sum&quot;,
+        &quot;OP_EQUAL&quot;
+      ]
+    }
+  ]
+}
+</code></pre><h3>Add Layout and state</h3><ol><li><p>Open <code>App.svelte</code> in your editor</p></li><li><p>Add layout after the title box </p></li></ol><pre><code class="language-html">&lt;div class=&quot;box&quot;&gt;
+  &lt;h1 class=&quot;title&quot;&gt;Calculator&lt;/h1&gt;
+  &lt;p class=&quot;has-text-weight-bold&quot;&gt;
+    {contractAddress}
+  &lt;/p&gt;
+  &lt;hr /&gt;
+
+  {#if txhex.length &gt; 0} 
+    &lt;hr /&gt;
+    &lt;p class=&quot;subtitle&quot;&gt;Raw transaction&lt;/p&gt;
+    &lt;input class=&quot;input&quot; value={txhex} /&gt;
+  {/if}
+&lt;/div&gt;
+</code></pre><ol start="4"><li>Add script section on top</li></ol><pre><code class="language-ts">&lt;script type=&quot;ts&quot;&gt;
+  import { Artifact, Contract } from &#x27;@ionio-lang/ionio&#x27;;
+  import { networks, address, ElementsValue, AssetHash } from &#x27;liquidjs-lib&#x27;;
+  import * as ecc from &#x27;tiny-secp256k1&#x27;;
+  import artifact from &#x27;./calculator.json&#x27;;
+
+  // instantiate the secp256-zkp wasm library
+  // define the network we going to work
+  const network = networks.regtest;
+  // create empty state
+  let txhex = &#x27;&#x27;;
+  // amounts to use for spending
+  const sats = 100000;
+  const fee = 100;
+
+  // 📚 Let&#x27;s compile the script
+  const contract = new Contract(
+    // our JSON artifact file
+    artifact as Artifact,
+    // our constructor to replace template strings
+    [3],
+    // network for address encoding
+    network,
+    // injectable secp256k1 libraries
+    { ecc, zkp: null }
+  );
+  const contractAddress = contract.address;
+&lt;/script&gt;
+</code></pre><h3>💰 Fund</h3><p>Run the app with <code>yarn dev</code> to see the address for your calculator</p><pre><code class="language-sh"># send 100k sats to the contract
+# this will auto-mine a block
+nigiri faucet --liquid &lt;contract_address&gt; 0.001
+</code></pre><p>You can open the exploer at <code>http://localhost:5001</code> and copy/paste address to check utxos</p><p>Track down the <code>txid</code> and <code>vout</code> of the new unspent output that locks coin in the calculator</p><h3>💸 Spend</h3><ol><li>Add a <code>onClick</code> function to be triggered by button</li></ol><pre><code class="language-ts">  const onClick = async () =&gt; {
+    const txid = prompt(&#x27;Enter a transaction hash&#x27;);
+    const vout = prompt(&#x27;Enter the vout&#x27;);
+
+    // attach to the funded contract using the utxo
+    const instance = contract.from(
+      // tranaction ID
+      txid,
+      // previous output index
+      parseInt(vout),
+      // the full previous output
+      {
+        script: address.toOutputScript(contractAddress),
+        value: ElementsValue.fromNumber(sats).bytes,
+        asset: AssetHash.fromHex(network.assetHash).bytes,
+        nonce: Buffer.alloc(0),
+      }
+    );
+
+    const recipient = prompt(&#x27;Enter a recipient to send funds to&#x27;);
+
+    const tx = await instance.functions
+      .sumMustBeThree(1, 2)
+      .withRecipient(recipient, sats - fee, network.assetHash)
+      .withFeeOutput(fee)
+      .unlock();
+
+    // extract and broadcast
+    txhex = tx.toHex();
+  };
+</code></pre><ol start="2"><li>Add the <code>onClick</code> to the <code>on:click</code> Svelte directive of the button</li></ol><pre><code class="language-html">&lt;button class=&quot;button is-primary&quot; on:click={onClick}&gt; Sum must be 3 &lt;/button&gt;
+</code></pre><ol start="3"><li>🚀 push the transaction</li></ol><p>Run the app and click on the button <code>Sum must be 3</code></p><p>It will ask you to enter a transaction hash and vout and an recipient address.</p><p>Get a fresh unconfidential address</p><pre><code class="language-sh">nigiri rpc --liquid validateaddress `nigiri rpc --liquid getnewaddress`
+</code></pre><p>Broadcast </p><pre><code class="language-sh">nigiri push --liquid &lt;txhex&gt;
+</code></pre>]]></content>
+        <author>
+            <name>Marco Argentieri</name>
+            <uri>https://github.com/tiero</uri>
+        </author>
+    </entry>
+</feed>

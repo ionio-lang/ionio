@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[535],{5641:function(i){i.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Build your first Liquid smart contract with Ionio SDK","permalink":"/blog/ionio-calculator"}]}')}}]);

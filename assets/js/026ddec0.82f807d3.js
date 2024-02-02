@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[534],{6419:function(t){t.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/smart-contract","name":"smart contract","count":1,"permalink":"/blog/tags/smart-contract"}')}}]);

@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkionio_website=self.webpackChunkionio_website||[]).push([[325],{8811:function(s){s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/workshop","name":"workshop","count":1,"permalink":"/blog/tags/workshop"}')}}]);
